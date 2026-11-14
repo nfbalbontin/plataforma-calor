@@ -1,0 +1,35 @@
+{
+  "version": "medidas-2026.1-borrador",
+  "fecha": "2026-11-14",
+  "estado": "Borrador sin validar por una autoridad sanitaria. Queda como pregunta abierta quién valida este catálogo.",
+  "referencias": {
+    "OMS-2008": {
+      "cita": "Matthies, F., Bickler, G., Cardeñosa Marín, N. y Hales, S. (eds.) (2008). Heat-health action plans: guidance. Oficina Regional de la OMS para Europa.",
+      "enlace": null
+    },
+    "OPS-2019": {
+      "cita": "Organización Panamericana de la Salud (2019). Ola de calor y medidas a tomar: revisión preliminar.",
+      "enlace": null
+    }
+  },
+  "niveles": {
+    "0": [
+      {"medida": "Mantener al día la lista de manzanas prioritarias y de personas dependientes por centro de salud.", "responsable": "Municipio y centros de atención primaria", "plazo": "Antes del 1 de noviembre de cada año", "respaldo": "OMS-2008"},
+      {"medida": "Revisar umbrales, plazos de alerta y este catálogo antes de la temporada.", "responsable": "Administrador de la plataforma", "plazo": "Una vez al año, en octubre", "respaldo": "OMS-2008"}
+    ],
+    "1": [
+      {"medida": "Difundir recomendaciones de hidratación, sombra y horarios a la población, con foco en personas mayores.", "responsable": "Seremi de Salud y municipio", "plazo": "El mismo día", "respaldo": "OPS-2019"},
+      {"medida": "Avisar a los centros de atención primaria de la comuna para que revisen su lista de personas con dependencia severa y oxígeno dependientes.", "responsable": "Dirección de salud municipal", "plazo": "En 24 horas", "respaldo": "OMS-2008"}
+    ],
+    "2": [
+      {"medida": "Contactar por teléfono o visitar a las personas con dependencia severa y a las oxígeno dependientes en atención domiciliaria.", "responsable": "Equipos de atención primaria", "plazo": "En 24 horas desde el nivel 2", "respaldo": "OMS-2008"},
+      {"medida": "Habilitar espacios frescos de acceso público en los sectores con manzanas de prioridad alta.", "responsable": "Municipio", "plazo": "El mismo día", "respaldo": "OMS-2008"},
+      {"medida": "Reforzar la vigilancia de las atenciones de urgencia de personas de 65 años o más.", "responsable": "Seremi de Salud", "plazo": "Diario mientras dure el nivel", "respaldo": "OPS-2019"}
+    ],
+    "3": [
+      {"medida": "Visitar en terreno las manzanas de prioridad alta, empezando por los hogares compuestos solo de personas mayores.", "responsable": "Municipio con apoyo de atención primaria", "plazo": "En 12 horas desde el nivel 3", "respaldo": "OMS-2008"},
+      {"medida": "Coordinar con la red de urgencia el refuerzo de turnos y la disponibilidad de traslados.", "responsable": "Servicio de Salud y Seremi de Salud", "plazo": "El mismo día", "respaldo": "OPS-2019"},
+      {"medida": "Suspender o reprogramar actividades masivas al aire libre en las horas de más calor.", "responsable": "Delegación Presidencial y municipio", "plazo": "El mismo día", "respaldo": "OPS-2019"}
+    ]
+  }
+}

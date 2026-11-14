@@ -1,0 +1,38 @@
+{
+  "version": "v261026",
+  "fecha_version": "2026-10-26",
+  "transcrito": "2026-11-10",
+  "nota": "Cifras transcritas de la plataforma pública el 10-11-2026, sin modificar. Son un cambio neto en muertes relacionadas con la temperatura respecto del promedio 1996-2025: pueden ser negativas. El tracker redondea, así que los meses y las regiones pueden no sumar el total. No publica rango de incertidumbre. Falta cargar el archivo mes a mes por región.",
+  "periodos": [
+    {"id": "jun_sep", "nombre": "Junio a septiembre de 2026", "tipo": "estimación con temperaturas observadas"},
+    {"id": "oct_mar", "nombre": "Octubre de 2026 a marzo de 2027", "tipo": "proyección con pronóstico estacional"},
+    {"id": "total", "nombre": "Junio de 2026 a marzo de 2027", "tipo": "total publicado"}
+  ],
+  "regiones": [
+    {"cod_region": "15", "valores": {"jun_sep": 0, "oct_mar": 17, "total": 18}},
+    {"cod_region": "01", "valores": {"jun_sep": 6, "oct_mar": 19, "total": 25}},
+    {"cod_region": "02", "valores": {"jun_sep": 6, "oct_mar": 29, "total": 34}},
+    {"cod_region": "03", "valores": {"jun_sep": 1, "oct_mar": 6, "total": 7}},
+    {"cod_region": "04", "valores": {"jun_sep": 4, "oct_mar": 12, "total": 16}},
+    {"cod_region": "05", "valores": {"jun_sep": 8, "oct_mar": 32, "total": 40}},
+    {"cod_region": "13", "valores": {"jun_sep": 18, "oct_mar": 12, "total": 31}},
+    {"cod_region": "06", "valores": {"jun_sep": 1, "oct_mar": 3, "total": 4}},
+    {"cod_region": "07", "valores": {"jun_sep": 2, "oct_mar": 5, "total": 7}},
+    {"cod_region": "16", "valores": {"jun_sep": 0, "oct_mar": 1, "total": 1}},
+    {"cod_region": "08", "valores": {"jun_sep": 1, "oct_mar": 11, "total": 12}},
+    {"cod_region": "09", "valores": {"jun_sep": 0, "oct_mar": 3, "total": 3}},
+    {"cod_region": "14", "valores": {"jun_sep": 0, "oct_mar": 2, "total": 2}},
+    {"cod_region": "10", "valores": {"jun_sep": 0, "oct_mar": 2, "total": 2}},
+    {"cod_region": "11", "valores": {"jun_sep": 0, "oct_mar": 0, "total": 0}},
+    {"cod_region": "12", "valores": {"jun_sep": 0, "oct_mar": 0, "total": 0}}
+  ],
+  "nacional_mensual": [
+    {"mes": "2026-10", "muertes": 0, "tipo": "proyección"},
+    {"mes": "2026-11", "muertes": 5, "tipo": "proyección"},
+    {"mes": "2026-12", "muertes": 23, "tipo": "proyección"},
+    {"mes": "2027-01", "muertes": 39, "tipo": "proyección"},
+    {"mes": "2027-02", "muertes": 40, "tipo": "proyección"},
+    {"mes": "2027-03", "muertes": 48, "tipo": "proyección"}
+  ],
+  "nacional": {"jun_sep": 47, "oct_mar": 150, "total": 200}
+}

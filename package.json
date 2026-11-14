@@ -1,0 +1,29 @@
+{
+  "name": "plataforma-calor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototipo no comercial: prevención de muertes por calor extremo en Chile",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "maplibre-gl": "^5.6.0",
+    "next": "15.5.25",
+    "pmtiles": "^4.3.0",
+    "postgres": "^3.4.9",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "vitest": "^3.2.0"
+  }
+}

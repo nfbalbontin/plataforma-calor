@@ -1,0 +1,14 @@
+{
+  "version": "prioridad-2026.1",
+  "fecha": "2026-11-14",
+  "variable": "mayores",
+  "descripcion": "Clase de prioridad de cada manzana según su número de personas de 60 años o más, comparado con las demás manzanas de su comuna que tienen al menos una persona mayor (supuesto S5).",
+  "corte_alta": 0.8,
+  "corte_media": 0.6,
+  "clases": {
+    "alta": "Quintil superior de personas mayores dentro de la comuna",
+    "media": "Segundo quintil de personas mayores dentro de la comuna",
+    "sin": "Sin prioridad"
+  },
+  "nota_rm": "En la RM la clase alta exigirá además el quintil superior de calor de AURA cuando ese módulo esté autorizado y cargado."
+}

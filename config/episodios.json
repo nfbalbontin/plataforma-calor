@@ -1,0 +1,6 @@
+{
+  "version": "episodios-2026.1",
+  "definicion": "Tres o más días seguidos con temperatura media sobre el percentil 90 local del período cálido, medida en la comuna capital de la región.",
+  "dias_minimos": 3,
+  "percentil": 90
+}

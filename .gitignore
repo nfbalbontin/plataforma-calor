@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.trabajo/
+.datos/
+.env
+.env.local
+next-env.d.ts
+tsconfig.tsbuildinfo
+__pycache__/
+# Módulo AURA: no se publica sin autorización escrita de su equipo
+datos/aura.json
+public/teselas/*_aura.pmtiles
+public/descargas/manzanas_aura/

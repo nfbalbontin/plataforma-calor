@@ -1,0 +1,20 @@
+{
+  "version": "alerta-2026.1",
+  "fecha": "2026-11-14",
+  "estados": ["Sin alerta", "Aviso", "Alerta", "Alerta máxima"],
+  "comuna": [
+    {"estado": 3, "regla": "Nivel 3 hoy", "respaldo": "Nivel 3"},
+    {"estado": 2, "regla": "Nivel 2 hoy, o tercer día seguido con nivel 1 o más", "respaldo": "Nivel 2 o más · Nivel 1 o más, tercer día seguido o posterior"},
+    {"estado": 1, "regla": "Nivel 1 hoy, o nivel 2 o más pronosticado para mañana o pasado mañana", "respaldo": "Nivel 1, primer o segundo día"},
+    {"estado": 0, "regla": "Ninguna de las anteriores", "respaldo": "Nivel 0"}
+  ],
+  "dias_seguidos_alerta": 3,
+  "dias_anticipacion": 2,
+  "territorio": {
+    "fraccion_poblacion": 0.25,
+    "cobertura_minima": 0.5,
+    "regla": "Una provincia, una región o el país toman el estado más alto que alcanzan comunas con al menos el 25 % de sus personas de 65 años o más. Si las comunas con umbral no suman la mitad de esa población, el territorio queda «sin umbral»."
+  },
+  "manzana": "La manzana hereda el estado de su comuna. Dentro de la comuna se atiende primero la clase de prioridad alta y luego la media.",
+  "limites": "La regla sale de una descripción de la Región Metropolitana, no de un modelo calibrado, y se aplica igual en todo el país hasta que exista la curva de riesgo de cada región. El 25 % es un parámetro de diseño. No es una alerta oficial."
+}
