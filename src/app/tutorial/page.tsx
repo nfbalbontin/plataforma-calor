@@ -8,6 +8,15 @@ const PASOS: [string, string][] = [
   ["Revisa el panel", "El panel ordena las comunas por nivel y muestra la alerta oficial, la alerta propia y las medidas de cada nivel."],
   ["Compara con lo observado", "En «Impacto» filtras defunciones por región, comuna, edad, año y mes; los períodos con episodio de calor van en rojo."],
   ["Pincha cualquier cifra", "Las cifras subrayadas abren su fuente, fecha, método y si son registro, estimación o proyección."],
+  ["Decide con los paneles de análisis", "En «Análisis» ves dónde actuar, simulas una medida, miras la proyección mensual y calculas cuánto conviene invertir. Las muertes van siempre como rango y con una etiqueta: robusta, depende del supuesto o no se sostiene."],
+];
+
+// Los paneles de análisis tienen cada uno su propio ejemplo guiado.
+const PANELES: [string, string, string][] = [
+  ["/analisis/donde", "Análisis: dónde actuar", "Ranking de comunas por personas mayores y días de calor, con la robustez de esa prioridad."],
+  ["/analisis/simulador", "Análisis: simulador de políticas", "Escenarios hipotéticos de días de calor, edad de la población y áreas verdes."],
+  ["/analisis/proyeccion", "Análisis: proyección mensual", "Muertes esperadas por mes con el pronóstico y comunas de mayor peligro."],
+  ["/analisis/inversion", "Análisis: cuánto invertir", "Muertes que una medida debe evitar para justificar su costo."],
 ];
 
 /** Cómo se usa la plataforma y acceso al ejemplo guiado de cada sección. */
@@ -17,7 +26,7 @@ export default function Tutorial() {
       <h1>Tutorial: cómo usar la plataforma</h1>
       <section className="seccion"><video src="/video/lanzamiento.mp4" controls preload="metadata" aria-label="Video de presentación" style={{ maxWidth: 760 }} /></section>
       <section className="seccion">
-        <h2>En siete pasos</h2>
+        <h2>En ocho pasos</h2>
         <ol style={{ paddingLeft: 20, color: "var(--texto-2)", maxWidth: "90ch" }}>
           {PASOS.map(([t, d]) => <li key={t} style={{ margin: "8px 0" }}><b style={{ color: "var(--texto)" }}>{t}.</b> {d}</li>)}
         </ol>
@@ -26,7 +35,7 @@ export default function Tutorial() {
         <h2>Ejemplo guiado de cada sección</h2>
         <p className="sub">Cada sección tiene un botón «Ayuda» que recorre un ejemplo. Desde aquí se abre directo.</p>
         <div className="grilla g3" style={{ marginTop: 10 }}>
-          {SECCIONES.filter(([h]) => h !== "/tutorial").map(([href, nombre, para]) => (
+          {[...SECCIONES.filter(([h]) => h !== "/tutorial" && h !== "/analisis"), ...PANELES].map(([href, nombre, para]) => (
             <div key={href} className="tarjeta">
               <h3>{nombre}</h3><p className="chico">{para}</p>
               <p style={{ marginTop: 10 }}><a className="boton sec" href={`${href}?ayuda=1`}>Iniciar ejemplo</a></p>

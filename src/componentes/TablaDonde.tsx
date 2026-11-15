@@ -26,7 +26,7 @@ export function TablaDonde({ filas, regiones }: { filas: FilaD[]; regiones: { co
         <span className="chico">{vista.length} comunas · {cuenta("robusta")} robustas · {cuenta("depende")} dependen del supuesto</span>
         <a className="boton sec" href="/api/descargas/analisis-donde">Descargar todo (CSV)</a>
       </div>
-      <div className="grilla" style={{ gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.4fr)", marginTop: 12, alignItems: "start" }}>
+      <div className="grilla dos-tabla" style={{ marginTop: 12 }}>
         <div data-tour="mapa-donde">
           <MapaClases clases={clases} bbox={bbox} alPinchar={setSel} />
           <div className="fila chico" style={{ marginTop: 6 }}><Rob clase="robusta" /><Rob clase="depende" /><span className="fila" style={{ gap: 4 }}><span className="cuadro" style={{ background: "var(--pri-media)" }} />no se sostiene</span><span className="fila" style={{ gap: 4 }}><span className="cuadro" style={{ background: "var(--sin)" }} />fuera del filtro</span></div>

@@ -47,7 +47,7 @@ export default async function Proyeccion({ searchParams }: { searchParams: Promi
         <button className="boton" type="submit">Aplicar</button>
       </form>
 
-      <section className="seccion grilla" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)", alignItems: "start" }}>
+      <section className="seccion grilla dos-grafico">
         <div className="tarjeta" data-tour="pro-grafico">
           <h3>Muertes esperadas por mes en {com ? nombreCom[com] : `la Región ${nombreReg[reg]}`}{tramo >= 0 ? `, ${TRAMOS[tramo]} años` : ""}</h3>
           <BarrasRango unidad="muertes esperadas" filas={meses.map((m) => ({ t: mesTxt(m.ym) + (m.parcial ? " (resto)" : ""), bajo: m.rango[0], alto: m.rango[1], nota: `${num(m.dias, 1)} días sobre el umbral` }))} />

@@ -23,7 +23,7 @@ export function Inversion({ territorios, p }: { territorios: Terr[]; p: Parametr
   const r = useMemo(() => (evitadas && costo > 0 ? inversion(costo, p.valor_vida_estadistica.clp, evitadas) : null), [evitadas, costo, p]);
   const vve = p.valor_vida_estadistica.clp;
   return (
-    <div className="grilla" style={{ gridTemplateColumns: "minmax(280px, 380px) minmax(0, 1fr)", alignItems: "start" }}>
+    <div className="grilla dos-lateral">
       <div className="tarjeta" data-tour="inv-entradas">
         <h3>Entradas</h3>
         {pre ? (

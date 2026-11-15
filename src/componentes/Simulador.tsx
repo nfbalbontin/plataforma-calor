@@ -54,7 +54,7 @@ export function Simulador({ regiones, p }: { regiones: Reg[]; p: Parametros }) {
   };
 
   return (
-    <div className="grilla" style={{ gridTemplateColumns: "minmax(280px, 380px) minmax(0, 1fr)", alignItems: "start" }}>
+    <div className="grilla dos-lateral">
       <div className="tarjeta" data-tour="sim-controles">
         <h3>Supuestos del escenario</h3>
         <label>Regiones afectadas ({sel.length})</label>
