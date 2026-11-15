@@ -1,4 +1,4 @@
-"""Proyección mensual: temperaturas pronosticadas por región para el motor de cálculo (Panel 3).
+"""Tendencia estacional por región para el módulo de riesgo: verano más cálido, normal o menos cálido.
 
 - Próximos 16 días: pronóstico diario de Open-Meteo (api.open-meteo.com/v1/forecast), día a día.
 - Desde el día 17 hasta marzo: API estacional de Open-Meteo (seasonal-api.open-meteo.com/v1/seasonal).
@@ -6,7 +6,7 @@
   Se usa su anomalía mensual de la temperatura máxima (ECMWF SEAS5, respecto del clima del propio
   modelo), y la dispersión entre los 51 miembros del ensamble se toma de las series diarias de cada
   miembro (promedio mensual del miembro menos promedio del ensamble).
-- El motor (src/lib/motor.ts) suma esa anomalía a los días históricos de cada mes y aplica la fórmula.
+- El sitio solo clasifica la anomalía de cada mes: más cálido, normal o menos cálido. No se traduce a muertes.
   Este programa no calcula muertes.
 - Punto de cada región: el centro poblado de su comuna capital, el mismo de su umbral.
 
@@ -46,15 +46,15 @@ def pedir(url, params):
 
 
 def main():
-    ins = json.loads((DATOS / "motor_insumos.json").read_text())
+    modelo = json.loads((DATOS / "modelo.json").read_text())["regiones"]
     comunas = {c["cod"]: c for c in json.loads((DATOS / "comunas.json").read_text())}
     hoy = dt.date.today()
     fin = dt.date(hoy.year + (hoy.month > 3), 3, 31)          # fin del período cálido
     dias = min(215, (fin - hoy).days + 1)
     regiones, omitidas = {}, []
-    for reg, r in sorted(ins["regiones"].items()):
+    for reg, r in sorted(modelo.items()):
         cap = comunas.get(f"{reg}101")
-        if not r["clima"] or not cap or not cap["punto_clima"] or dias < 1:
+        if not cap or not cap["punto_clima"] or dias < 1:
             omitidas.append(reg)
             continue
         lon, lat = cap["punto_clima"]
@@ -77,9 +77,8 @@ def main():
                 continue
             medias = [s / n for s, n in zip(suma[ym], cuenta[ym]) if n]
             centro = sum(medias) / len(medias)
-            meses[ym] = {"anomalia": round(anomalia[ym], 2), "desvios": [round(m - centro, 2) for m in medias],
-                         "normal": r["clima"]["normal_mes"].get(str(int(ym[5:])))}
-        regiones[reg] = {"capital": cap["nombre"], "umbral": r["clima"]["umbral"], "miembros": len(claves),
+            meses[ym] = {"anomalia": round(anomalia[ym], 2), "desvios": [round(m - centro, 2) for m in medias]}
+        regiones[reg] = {"capital": cap["nombre"], "umbral": r["curvas"]["M_T"]["umbral"], "miembros": len(claves),
                          "diario": [[f, t] for f, t in zip(d16["time"], d16["temperature_2m_max"]) if t is not None], "meses": meses}
         print(f"  región {reg} ({cap['nombre']}): {len(claves)} miembros; anomalías {[(k[5:], v['anomalia']) for k, v in meses.items()]}", flush=True)
         time.sleep(4)

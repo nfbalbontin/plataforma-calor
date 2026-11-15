@@ -1,12 +1,12 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { SECCIONES } from "@/lib/secciones";
+
+const SECCIONES: [string, string][] = [["/historia", "Historia"], ["/riesgo", "Riesgo futuro"], ["/metodologia", "Metodología y datos"]];
 
 export function Navegacion() {
   const ruta = usePathname();
   return (
-    <nav className="nav" aria-label="Secciones" data-tour="nav">
-      <a href="/" aria-current={ruta === "/" ? "page" : undefined}>Inicio</a>
+    <nav className="nav" aria-label="Secciones">
       {SECCIONES.map(([href, texto]) => <a key={href} href={href} aria-current={ruta.startsWith(href) ? "page" : undefined}>{texto}</a>)}
     </nav>
   );

@@ -1,173 +1,158 @@
-/** Gráficos SVG generados en el servidor. Cada marca trae su valor al pasar el cursor y hay una tabla alternativa. */
-import type { SemanaVig } from "@/lib/datos";
-import type { Umbral } from "@/lib/niveles";
-import { fechaCorta, fechaLarga } from "@/lib/tiempo";
+"use client";
+import { useState, type ReactNode } from "react";
 
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-type Tramo = "total" | "e0_64" | "e65_79" | "e80_mas";
-const dec = (n: number | null | undefined) => (n == null ? "sin dato" : n.toLocaleString("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+const W = 760, IZQ = 46, DER = 12;
+const ticks = (max: number, n = 4) => {
+  if (!(max > 0)) return [0];
+  const paso = Math.pow(10, Math.floor(Math.log10(max / n))), m = max / n / paso;
+  const p = (m >= 5 ? 5 : m >= 2 ? 2 : 1) * paso;
+  return Array.from({ length: Math.floor(max / p) + 1 }, (_, i) => +(i * p).toFixed(6));
+};
+const f = (v: number, d = 0) => v.toLocaleString("es-CL", { maximumFractionDigits: d });
 
-function escala(max: number) {
-  const paso = [1, 2, 5, 10, 20, 50, 100, 200, 250, 500, 1000, 2000].find((p) => max / p <= 5) ?? 5000;
-  const tope = Math.ceil(max / paso) * paso;
-  return { tope, marcas: Array.from({ length: tope / paso + 1 }, (_, i) => i * paso) };
+function Flotante({ x, children }: { x: number; children: ReactNode }) {
+  return <div className="graf-tip" style={x > 0.6 ? { right: `${(1 - x) * 100}%` } : { left: `${x * 100}%` }}>{children}</div>;
 }
 
-/** Defunciones semanales observadas contra lo esperado con su rango (RF-28). */
-export function BarrasSemanales({ semanas, tramo, enEpisodio }: { semanas: SemanaVig[]; tramo: Tramo; enEpisodio: Set<string> }) {
-  const W = 920, H = 280, ml = 44, mr = 12, mt = 14, mb = 30;
-  const esp = (s: SemanaVig) => s[`${tramo}_esp` as const] as [number, number, number] | null;
-  const max = Math.max(...semanas.map((s) => Math.max(s[tramo] ?? 0, esp(s)?.[2] ?? 0)), 1);
-  const { tope, marcas } = escala(max * 1.05);
-  const paso = (W - ml - mr) / semanas.length;
-  const x = (i: number) => ml + i * paso;
-  const y = (v: number) => mt + (H - mt - mb) * (1 - v / tope);
-  const conEsp = semanas.map((s, i) => ({ i, e: esp(s) })).filter((d) => d.e);
-  const banda = conEsp.length
-    ? `M${conEsp.map((d) => `${x(d.i) + paso / 2},${y(d.e![2])}`).join(" L")} L${[...conEsp].reverse().map((d) => `${x(d.i) + paso / 2},${y(d.e![0])}`).join(" L")} Z` : "";
-  const linea = conEsp.map((d, k) => `${k ? "L" : "M"}${x(d.i) + paso / 2},${y(d.e![1])}`).join(" ");
+/** Dos paneles alineados por verano: barras arriba y línea con su rango abajo. Un clic elige el verano. */
+export function SerieVeranos({ etiquetas, barras, linea, lo, hi, rotuloBarras, rotuloLinea, dec = 0, sel, alElegir }: {
+  etiquetas: string[]; barras: (number | null)[]; linea: (number | null)[]; lo: (number | null)[]; hi: (number | null)[];
+  rotuloBarras: string; rotuloLinea: string; dec?: number; sel: number | null; alElegir?: (i: number) => void;
+}) {
+  const [h, setH] = useState<number | null>(null);
+  const n = etiquetas.length, A1 = 96, A2 = 170, SEP = 34, H = A1 + SEP + A2 + 30;
+  const ancho = (W - IZQ - DER) / n, cx = (i: number) => IZQ + ancho * (i + 0.5);
+  const maxB = Math.max(1, ...barras.map((v) => v ?? 0)), tb = ticks(maxB, 3), topeB = Math.max(maxB, tb[tb.length - 1]);
+  const maxL = Math.max(1e-9, ...hi.map((v) => v ?? 0), ...linea.map((v) => v ?? 0)), tl = ticks(maxL, 4), topeL = Math.max(maxL, tl[tl.length - 1]);
+  const yB = (v: number) => A1 - (v / topeB) * (A1 - 14), y0 = A1 + SEP, yL = (v: number) => y0 + A2 - (Math.max(0, v) / topeL) * (A2 - 10);
+  const tramos: number[][] = [];
+  linea.forEach((v, i) => { if (v == null) return; const u = tramos[tramos.length - 1]; if (u && u[u.length - 1] === i - 1) u.push(i); else tramos.push([i]); });
+  const cada = Math.ceil(n / 12);
   return (
-    <figure style={{ margin: 0 }}>
-      <div className="leyenda-graf">
-        <span><span className="cuadro" style={{ background: "#c9d2f2" }} />Observadas</span>
-        <span><span className="cuadro" style={{ background: "#c9d2f2", opacity: 0.45, outline: "1px dashed #c9d2f2" }} />Provisionales (últimas 4 semanas)</span>
-        <span><span className="cuadro" style={{ background: "var(--n3)" }} />Semana con episodio de calor</span>
-        <span><span className="cuadro" style={{ background: "rgba(157,184,255,.25)", borderTop: "2px solid #9db8ff" }} />Esperadas: mediana y rango</span>
-      </div>
-      <svg className="grafico" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Defunciones semanales observadas y esperadas">
-        {marcas.map((m) => <g key={m}><line className="guia" x1={ml} x2={W - mr} y1={y(m)} y2={y(m)} /><text x={ml - 6} y={y(m) + 4} textAnchor="end">{m.toLocaleString("es-CL")}</text></g>)}
-        {banda && <path d={banda} fill="rgba(157,184,255,.18)" />}
-        {semanas.map((s, i) => {
-          const v = s[tramo]; if (v == null) return null;
-          const e = esp(s); const ep = enEpisodio.has(`${s.a}-${s.s}`);
-          return (
-            <rect key={i} x={x(i) + 1} y={y(v)} width={Math.max(1, paso - 2)} height={y(0) - y(v)} rx={Math.min(3, paso / 3)}
-              fill={ep ? "var(--n3)" : "#c9d2f2"} opacity={s.provisional ? 0.45 : 1} stroke={s.provisional ? "#c9d2f2" : "none"} strokeDasharray="3 2">
-              <title>{`Semana ${s.s} de ${s.a} (desde el ${fechaLarga(s.inicio)}): ${v.toLocaleString("es-CL")} observadas${s.provisional ? " (provisional)" : ""}; esperadas ${e ? `${e[1].toLocaleString("es-CL")} (rango ${e[0].toLocaleString("es-CL")} a ${e[2].toLocaleString("es-CL")})` : "sin referencia"}${ep ? "; semana con episodio de calor" : ""}`}</title>
-            </rect>
-          );
-        })}
-        {linea && <path d={linea} fill="none" stroke="#9db8ff" strokeWidth={2} />}
-        <line className="eje" x1={ml} x2={W - mr} y1={y(0)} y2={y(0)} />
-        {semanas.map((s, i) => {
-          const d = new Date(s.inicio + "T12:00:00Z");
-          return d.getUTCDate() <= 7 ? <text key={i} x={x(i) + paso / 2} y={H - 10} textAnchor="middle">{MESES[d.getUTCMonth()]}{d.getUTCMonth() === 0 ? ` ${d.getUTCFullYear()}` : ""}</text> : null;
-        })}
+    <div className="graf-caja" onMouseLeave={() => setH(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="grafico" role="img" aria-label={`${rotuloBarras} y ${rotuloLinea} por verano`}>
+        <text x={0} y={10} style={{ fontWeight: 650 }}>{rotuloBarras}</text>
+        {tb.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={yB(t)} y2={yB(t)} /><text x={IZQ - 6} y={yB(t) + 4} textAnchor="end">{f(t)}</text></g>)}
+        {barras.map((v, i) => v != null && <rect key={i} x={cx(i) - ancho * 0.36} width={ancho * 0.72} y={yB(v)} height={Math.max(0, A1 - yB(v))} rx={Math.min(3, ancho * 0.2)} fill="var(--n2)" opacity={sel == null || sel === i ? 1 : 0.45} />)}
+        <text x={0} y={y0 - 12} style={{ fontWeight: 650 }}>{rotuloLinea}</text>
+        {tl.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={yL(t)} y2={yL(t)} /><text x={IZQ - 6} y={yL(t) + 4} textAnchor="end">{f(t, dec)}</text></g>)}
+        {tramos.map((u, k) => <g key={k}>
+          <path d={`M${u.map((i) => `${cx(i)},${yL(hi[i] ?? 0)}`).join("L")}L${[...u].reverse().map((i) => `${cx(i)},${yL(lo[i] ?? 0)}`).join("L")}Z`} fill="var(--banda)" />
+          <path d={`M${u.map((i) => `${cx(i)},${yL(linea[i]!)}`).join("L")}`} fill="none" stroke="var(--tinta)" strokeWidth={2} strokeLinejoin="round" />
+        </g>)}
+        {linea.map((v, i) => v != null && <circle key={i} cx={cx(i)} cy={yL(v)} r={sel === i ? 5 : n > 30 ? 2.5 : 3.5} fill="var(--tinta)" stroke="var(--panel)" strokeWidth={sel === i ? 2 : 1} />)}
+        {etiquetas.map((e, i) => i % cada === 0 && <text key={i} x={cx(i)} y={H - 8} textAnchor="middle">{e}</text>)}
+        {h != null && <line x1={cx(h)} x2={cx(h)} y1={12} y2={y0 + A2} stroke="var(--texto-3)" strokeDasharray="3 3" />}
+        {etiquetas.map((_, i) => <rect key={i} x={IZQ + ancho * i} width={ancho} y={0} height={H} fill="transparent" style={{ cursor: alElegir ? "pointer" : "default" }} onMouseEnter={() => setH(i)} onClick={() => alElegir?.(i)} />)}
       </svg>
-    </figure>
+      {h != null && <Flotante x={cx(h) / W}>
+        <b>Verano {etiquetas[h]}</b>
+        <div>{rotuloBarras}: {barras[h] == null ? "sin dato" : f(barras[h]!, 1)}</div>
+        <div>{rotuloLinea}: {linea[h] == null ? "sin dato" : `${f(linea[h]!, dec)} (${f(Math.max(0, lo[h] ?? 0), dec)} a ${f(Math.max(0, hi[h] ?? 0), dec)})`}</div>
+      </Flotante>}
+    </div>
   );
 }
 
-export type PuntoTemp = { fecha: string; tmean: number | null; tmax: number | null; tmin: number | null; tipo: "observado" | "pronóstico" };
-
-/** Temperatura observada y pronosticada de una comuna con sus cortes locales (RF-02). */
-export function LineaTemperatura({ puntos, umbral }: { puntos: PuntoTemp[]; umbral: Umbral | null }) {
-  const W = 920, H = 260, ml = 40, mr = 92, mt = 12, mb = 30;
-  const vals = puntos.flatMap((p) => [p.tmax, p.tmin, p.tmean]).filter((v): v is number => v != null);
-  if (vals.length === 0) return <p className="chico">Sin temperatura guardada todavía.</p>;
-  const cortes = umbral ? [umbral.p90, umbral.p95, umbral.p99] : [];
-  const lo = Math.floor(Math.min(...vals, ...cortes) - 1), hi = Math.ceil(Math.max(...vals, ...cortes) + 1);
-  const x = (i: number) => ml + (W - ml - mr) * (puntos.length === 1 ? 0.5 : i / (puntos.length - 1));
-  const y = (v: number) => mt + (H - mt - mb) * (1 - (v - lo) / (hi - lo));
-  const obs = puntos.map((p, i) => ({ ...p, i })).filter((p) => p.tipo === "observado" && p.tmean != null);
-  const pron = puntos.map((p, i) => ({ ...p, i })).filter((p) => p.tipo === "pronóstico" && p.tmean != null);
-  const camino = (ps: { i: number; tmean: number | null }[]) => ps.map((p, k) => `${k ? "L" : "M"}${x(p.i)},${y(p.tmean!)}`).join(" ");
-  const rango = puntos.map((p, i) => ({ ...p, i })).filter((p) => p.tmax != null && p.tmin != null);
-  const banda = rango.length > 1 ? `M${rango.map((p) => `${x(p.i)},${y(p.tmax!)}`).join(" L")} L${[...rango].reverse().map((p) => `${x(p.i)},${y(p.tmin!)}`).join(" L")} Z` : "";
-  const marcas = Array.from({ length: Math.floor((hi - lo) / 5) + 1 }, (_, k) => Math.ceil(lo / 5) * 5 + k * 5).filter((m) => m <= hi);
-  const puente = obs.length && pron.length ? [obs[obs.length - 1], pron[0]] : [];
+/** Detalle diario de un verano: temperatura máxima arriba (con el umbral de calor extremo) y casos del día abajo. */
+export function DetalleDiario({ inicio, tmax, calor, p95, valores, rotuloValores, rotuloArriba, arriba }: {
+  inicio: string; tmax: number[] | null; calor: number[]; p95: number | null; valores: number[]; rotuloValores: string; rotuloArriba?: string; arriba?: number[];
+}) {
+  const [h, setH] = useState<number | null>(null);
+  const serie = tmax ?? arriba ?? [], n = Math.max(serie.length, valores.length);
+  const A1 = 120, A2 = 130, SEP = 34, H = A1 + SEP + A2 + 28, ancho = (W - IZQ - DER) / n, cx = (i: number) => IZQ + ancho * (i + 0.5);
+  const minT = tmax ? Math.floor(Math.min(...serie, p95 ?? 99) - 1) : 0, maxT = Math.ceil(Math.max(...serie, p95 ?? 0) + 1);
+  const yT = (v: number) => A1 - ((v - minT) / (maxT - minT || 1)) * (A1 - 14);
+  const maxV = Math.max(1, ...valores), tv = ticks(maxV, 3), topeV = Math.max(maxV, tv[tv.length - 1]), y0 = A1 + SEP, yV = (v: number) => y0 + A2 - (v / topeV) * (A2 - 8);
+  const fecha = (i: number) => { const d = new Date(inicio + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + i); return d; };
+  const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const esCalor = new Set(calor);
+  const tt = tmax ? ticks(maxT - minT, 3).map((t) => t + minT) : ticks(maxT, 3);
   return (
-    <figure style={{ margin: 0 }}>
-      <div className="leyenda-graf">
-        <span><svg width="22" height="8"><line x1="0" x2="22" y1="4" y2="4" stroke="#fff" strokeWidth="2" /></svg>Media observada</span>
-        <span><svg width="22" height="8"><line x1="0" x2="22" y1="4" y2="4" stroke="#fff" strokeWidth="2" strokeDasharray="4 3" /></svg>Media pronosticada</span>
-        <span><span className="cuadro" style={{ background: "rgba(157,184,255,.22)" }} />Entre mínima y máxima</span>
-      </div>
-      <svg className="grafico" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Temperatura diaria observada y pronosticada con los cortes locales">
-        {marcas.map((m) => <g key={m}><line className="guia" x1={ml} x2={W - mr} y1={y(m)} y2={y(m)} /><text x={ml - 6} y={y(m) + 4} textAnchor="end">{m}°</text></g>)}
-        {banda && <path d={banda} fill="rgba(157,184,255,.16)" />}
-        {umbral && ([["p90", umbral.p90, "var(--n1)", "Nivel 1"], ["p95", umbral.p95, "var(--n2)", "Nivel 2"], ["p99", umbral.p99, "var(--n3)", "Nivel 3"]] as const).map(([k, v, c, t]) => (
-          <g key={k}><line x1={ml} x2={W - mr} y1={y(v)} y2={y(v)} stroke={c} strokeWidth={1.5} strokeDasharray="2 4" /><text x={W - mr + 6} y={y(v) + 4}>{t} · {v.toLocaleString("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}°</text></g>
-        ))}
-        <path d={camino(obs)} fill="none" stroke="#fff" strokeWidth={2} />
-        {puente.length === 2 && <path d={camino(puente)} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="4 4" />}
-        <path d={camino(pron)} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="4 4" />
-        {puntos.map((p, i) => p.tmean == null ? null : (
-          <g key={p.fecha}>
-            <circle cx={x(i)} cy={y(p.tmean)} r={4} fill={p.tipo === "observado" ? "#fff" : "#0c143a"} stroke="#fff" strokeWidth={2} />
-            <rect x={x(i) - 14} y={mt} width={28} height={H - mt - mb} fill="transparent">
-              <title>{`${fechaCorta(p.fecha)} (${p.tipo}): media ${dec(p.tmean)} °C, máxima ${dec(p.tmax)} °C, mínima ${dec(p.tmin)} °C`}</title>
-            </rect>
-            <text x={x(i)} y={H - 10} textAnchor="middle">{fechaCorta(p.fecha)}</text>
-          </g>
-        ))}
+    <div className="graf-caja" onMouseLeave={() => setH(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="grafico" role="img" aria-label="Detalle diario del verano">
+        <text x={0} y={10} style={{ fontWeight: 650 }}>{tmax ? "Temperatura máxima (°C)" : rotuloArriba}</text>
+        {calor.map((i) => <rect key={i} x={IZQ + ancho * i} width={ancho + 0.3} y={14} height={y0 + A2 - 14} fill="var(--n2)" opacity={0.16} />)}
+        {tt.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={yT(t)} y2={yT(t)} /><text x={IZQ - 6} y={yT(t) + 4} textAnchor="end">{f(t)}</text></g>)}
+        {tmax ? <path d={`M${serie.map((v, i) => `${cx(i)},${yT(v)}`).join("L")}`} fill="none" stroke="var(--n2)" strokeWidth={2} strokeLinejoin="round" />
+          : serie.map((v, i) => v > 0 && <rect key={i} x={cx(i) - ancho * 0.4} width={ancho * 0.8} y={yT(v)} height={A1 - yT(v)} fill="var(--n2)" />)}
+        {tmax && p95 != null && <g><line x1={IZQ} x2={W - DER} y1={yT(p95)} y2={yT(p95)} stroke="var(--texto-2)" strokeDasharray="5 4" /><text x={W - DER} y={yT(p95) - 4} textAnchor="end">calor extremo: sobre {f(p95, 1)} °C</text></g>}
+        <text x={0} y={y0 - 12} style={{ fontWeight: 650 }}>{rotuloValores}</text>
+        {tv.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={yV(t)} y2={yV(t)} /><text x={IZQ - 6} y={yV(t) + 4} textAnchor="end">{f(t)}</text></g>)}
+        {valores.map((v, i) => v > 0 && <rect key={i} x={cx(i) - ancho * 0.38} width={Math.max(1, ancho * 0.76)} y={yV(v)} height={y0 + A2 - yV(v)} fill={esCalor.has(i) ? "var(--tinta)" : "var(--barra)"} />)}
+        {Array.from({ length: n }, (_, i) => fecha(i)).map((d, i) => d.getUTCDate() === 1 && <text key={i} x={cx(i)} y={H - 8}>{MES[d.getUTCMonth()]} {d.getUTCFullYear()}</text>)}
+        {h != null && <line x1={cx(h)} x2={cx(h)} y1={14} y2={y0 + A2} stroke="var(--texto-3)" strokeDasharray="3 3" />}
+        <rect x={IZQ} width={W - IZQ - DER} y={0} height={H} fill="transparent" onMouseMove={(e) => { const r = (e.currentTarget as SVGRectElement).getBoundingClientRect(); setH(Math.min(n - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * n)))); }} />
       </svg>
-    </figure>
+      {h != null && <Flotante x={cx(h) / W}>
+        <b>{fecha(h).getUTCDate()} {MES[fecha(h).getUTCMonth()]} {fecha(h).getUTCFullYear()}</b>{esCalor.has(h) && <span> · calor extremo</span>}
+        {serie[h] != null && <div>{tmax ? `Máxima: ${f(serie[h], 1)} °C` : `${rotuloArriba}: ${f(serie[h])}`}</div>}
+        <div>{rotuloValores}: {f(valores[h] ?? 0)}</div>
+      </Flotante>}
+    </div>
   );
 }
 
-/** Serie corta sin ejes, para ver la tendencia de un indicador. */
-export function Chispa({ valores, base, titulo }: { valores: (number | null)[]; base?: number | null; titulo: string }) {
-  const W = 120, H = 28;
-  const v = valores.filter((x): x is number => x != null);
-  if (v.length < 2) return <span className="chico">sin dato</span>;
-  const lo = Math.min(...v, base ?? Infinity), hi = Math.max(...v, base ?? -Infinity);
-  const y = (n: number) => 3 + (H - 6) * (1 - (n - lo) / (hi - lo || 1));
-  let d = "", abierto = false;
-  valores.forEach((n, i) => { if (n == null) { abierto = false; return; } d += `${abierto ? "L" : "M"}${(i / (valores.length - 1)) * W},${y(n)} `; abierto = true; });
+/** Curva de riesgo: aumento de casos según la temperatura, con su banda de incertidumbre, el umbral y el corte de calor extremo. */
+export function CurvaRiesgo({ x, rr, lo, hi, umbral, p95, unidad }: { x: number[]; rr: number[]; lo: number[]; hi: number[]; umbral: number | null; p95: number | null; unidad: string }) {
+  const [h, setH] = useState<number | null>(null);
+  const H = 268, A = 200, ARR = 18, pc = (v: number) => (v - 1) * 100;
+  const maxY = Math.max(5, ...hi.map(pc)), minY = Math.min(0, ...lo.map(pc)), ty = ticks(maxY, 4);
+  const px = (v: number) => IZQ + ((v - x[0]) / (x[x.length - 1] - x[0])) * (W - IZQ - DER), py = (v: number) => ARR + A - ((v - minY) / (maxY - minY)) * A;
+  const marcas = ticks(x[x.length - 1] - x[0], 6).map((t) => Math.ceil(x[0]) + t).filter((t) => t <= x[x.length - 1]);
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={titulo}>
-      <title>{titulo}</title>
-      {base != null && <line x1={0} x2={W} y1={y(base)} y2={y(base)} stroke="#7f8bbd" strokeDasharray="2 3" />}
-      <path d={d} fill="none" stroke="#fff" strokeWidth={1.75} />
-    </svg>
+    <div className="graf-caja" onMouseLeave={() => setH(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="grafico" role="img" aria-label="Curva de riesgo según la temperatura">
+        <text x={0} y={10} style={{ fontWeight: 650 }}>Aumento de casos respecto de un día sin calor (%)</text>
+        {ty.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={py(t)} y2={py(t)} /><text x={IZQ - 6} y={py(t) + 4} textAnchor="end">{f(t)}</text></g>)}
+        <path d={`M${x.map((v, i) => `${px(v)},${py(pc(hi[i]))}`).join("L")}L${[...x.keys()].reverse().map((i) => `${px(x[i])},${py(pc(lo[i]))}`).join("L")}Z`} fill="var(--banda)" />
+        <path d={`M${x.map((v, i) => `${px(v)},${py(pc(rr[i]))}`).join("L")}`} fill="none" stroke="var(--tinta)" strokeWidth={2} />
+        {umbral != null && <g><line x1={px(umbral)} x2={px(umbral)} y1={ARR} y2={ARR + A} stroke="var(--texto-2)" strokeDasharray="5 4" /><text x={px(umbral) + 5} y={ARR + 12}>umbral: {unidad === "°C" ? `${f(umbral, 1)} °C` : `percentil ${f(umbral)}`}</text></g>}
+        {p95 != null && <g><line x1={px(p95)} x2={px(p95)} y1={ARR} y2={ARR + A} stroke="var(--n2)" strokeDasharray="5 4" /><text x={px(p95) + (px(p95) > W - 170 ? -5 : 5)} y={ARR + 28} textAnchor={px(p95) > W - 170 ? "end" : "start"} style={{ fill: "var(--texto)" }}>calor extremo{unidad === "°C" ? `: ${f(p95, 1)} °C` : ""}</text></g>}
+        {marcas.map((t) => <text key={t} x={px(t)} y={ARR + A + 16} textAnchor="middle">{f(t)}</text>)}
+        <text x={W - DER} y={H - 6} textAnchor="end">{unidad === "°C" ? "Promedio de la máxima del día y de los 3 anteriores (°C)" : "Percentil local de la temperatura"}</text>
+        {h != null && <circle cx={px(x[h])} cy={py(pc(rr[h]))} r={4.5} fill="var(--tinta)" stroke="var(--panel)" strokeWidth={2} />}
+        <rect x={IZQ} width={W - IZQ - DER} y={0} height={H} fill="transparent" onMouseMove={(e) => { const r = (e.currentTarget as SVGRectElement).getBoundingClientRect(); setH(Math.min(x.length - 1, Math.max(0, Math.round(((e.clientX - r.left) / r.width) * (x.length - 1))))); }} />
+      </svg>
+      {h != null && <Flotante x={px(x[h]) / W}>
+        <b>{f(x[h], 1)} {unidad === "°C" ? "°C" : "(percentil)"}</b>
+        <div>{rr[h] <= 1 ? "Sin aumento estimado" : `+${f(pc(rr[h]), 1)} % (${f(Math.max(0, pc(lo[h])), 1)} a ${f(pc(hi[h]), 1)} %)`}</div>
+      </Flotante>}
+    </div>
   );
 }
 
-/** Barras horizontales simples para comparar territorios. Admite valores negativos. */
-export function BarrasH({ filas, unidad }: { filas: { nombre: string; valor: number; nota?: string }[]; unidad: string }) {
-  const max = Math.max(...filas.map((f) => Math.abs(f.valor)), 1);
-  const hayNeg = filas.some((f) => f.valor < 0);
+/** Ranking horizontal con rango: barra hasta la estimación y línea del intervalo. */
+export function BarrasRango({ filas, dec = 0, alElegir }: { filas: { cod: string; nombre: string; valor: number; lo: number; hi: number; nota?: string; href?: string }[]; dec?: number; alElegir?: (cod: string) => void }) {
+  const max = Math.max(1e-9, ...filas.map((x) => Math.max(x.hi, x.valor)));
   return (
-    <div role="img" aria-label={`Barras por territorio, ${unidad}`}>
-      {filas.map((f) => (
-        <div key={f.nombre} style={{ display: "grid", gridTemplateColumns: "170px 1fr 48px", gap: 8, alignItems: "center", padding: "3px 0", fontSize: 13 }} title={`${f.nombre}: ${f.valor} ${unidad}${f.nota ? ` · ${f.nota}` : ""}`}>
-          <span className="tenue">{f.nombre}</span>
-          <span style={{ position: "relative", height: 12, display: "block" }}>
-            <span style={{ position: "absolute", left: hayNeg ? "50%" : 0, top: 0, bottom: 0, width: 1, background: "var(--borde)" }} />
-            <span style={{ position: "absolute", top: 0, bottom: 0, borderRadius: 3, background: f.valor < 0 ? "#7f8bbd" : "#c9d2f2",
-              left: hayNeg ? (f.valor < 0 ? `${50 - (Math.abs(f.valor) / max) * 50}%` : "50%") : 0, width: `${(Math.abs(f.valor) / max) * (hayNeg ? 50 : 100)}%` }} />
-          </span>
-          <span className="tab" style={{ textAlign: "right", fontWeight: 700 }}>{f.valor.toLocaleString("es-CL")}</span>
+    <div className="rank">
+      {filas.map((x) => (
+        <div key={x.cod} className="rank-fila" title={x.nota}>
+          {x.href ? <a href={x.href}>{x.nombre}</a> : <button className="enlace-btn" onClick={() => alElegir?.(x.cod)}>{x.nombre}</button>}
+          <div className="rank-barra"><i style={{ width: `${(Math.max(0, x.valor) / max) * 100}%` }} /><b style={{ left: `${(Math.max(0, x.lo) / max) * 100}%`, width: `${((Math.max(0, x.hi) - Math.max(0, x.lo)) / max) * 100}%` }} /></div>
+          <span className="tab">{f(Math.max(0, x.valor), dec)} <small>({f(Math.max(0, x.lo), dec)} a {f(Math.max(0, x.hi), dec)})</small></span>
         </div>
       ))}
     </div>
   );
 }
 
-/** Barras con rango (bajo a alto) por período. La barra sólida llega al valor bajo; la clara, al alto. */
-export function BarrasRango({ filas, unidad }: { filas: { t: string; bajo: number; alto: number; nota?: string }[]; unidad: string }) {
-  const W = 760, H = 250, ml = 44, mr = 10, mt = 22, mb = 30;
-  const max = Math.max(...filas.map((f) => f.alto), 0.0001);
-  const { tope, marcas } = escala(max * 1.1 < 1 ? 1 : max * 1.1);
-  const paso = (W - ml - mr) / Math.max(filas.length, 1), an = Math.min(70, paso * 0.6);
-  const y = (v: number) => mt + (H - mt - mb) * (1 - v / tope);
-  const n = (v: number) => v.toLocaleString("es-CL", { maximumFractionDigits: v < 10 ? 1 : 0 });
+/** Perfil: porcentaje de cada categoría en días de calor extremo frente a días normales. */
+export function PerfilBarras({ cat, calor, normal }: { cat: string[]; calor: number[]; normal: number[] }) {
+  const tc = calor.reduce((a, b) => a + b, 0), tn = normal.reduce((a, b) => a + b, 0);
+  const filas = cat.map((c, i) => ({ c, a: tc ? (calor[i] / tc) * 100 : 0, b: tn ? (normal[i] / tn) * 100 : 0 })).filter((x) => x.a + x.b > 0);
+  const max = Math.max(1, ...filas.map((x) => Math.max(x.a, x.b)));
   return (
-    <figure style={{ margin: 0 }}>
-      <div className="leyenda-graf"><span><span className="cuadro" style={{ background: "var(--barra)" }} />Escenario bajo</span><span><span className="cuadro" style={{ background: "var(--barra)", opacity: 0.4 }} />Hasta el escenario alto</span></div>
-      <svg className="grafico" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Rango de ${unidad} por mes`}>
-        {marcas.map((m) => <g key={m}><line className="guia" x1={ml} x2={W - mr} y1={y(m)} y2={y(m)} /><text x={ml - 6} y={y(m) + 4} textAnchor="end">{m.toLocaleString("es-CL")}</text></g>)}
-        {filas.map((f, i) => { const x = ml + i * paso + (paso - an) / 2; return (
-          <g key={f.t}>
-            <rect x={x} y={y(f.alto)} width={an} height={y(0) - y(f.alto)} rx={3} fill="var(--barra)" opacity={0.4}><title>{`${f.t}: ${n(f.bajo)} a ${n(f.alto)} ${unidad}${f.nota ? `. ${f.nota}` : ""}`}</title></rect>
-            <rect x={x} y={y(f.bajo)} width={an} height={y(0) - y(f.bajo)} rx={3} fill="var(--barra)"><title>{`${f.t}: ${n(f.bajo)} a ${n(f.alto)} ${unidad}`}</title></rect>
-            <text x={x + an / 2} y={y(f.alto) - 6} textAnchor="middle" style={{ fill: "var(--texto)", fontWeight: 700 }}>{n(f.bajo)} a {n(f.alto)}</text>
-            <text x={x + an / 2} y={H - 10} textAnchor="middle">{f.t}</text>
-          </g>
-        ); })}
-        <line className="eje" x1={ml} x2={W - mr} y1={y(0)} y2={y(0)} />
-      </svg>
-    </figure>
+    <div className="perfil">
+      {filas.map((x) => (
+        <div key={x.c} className="perfil-fila" title={`${x.c}: ${f(x.a, 1)} % en días de calor extremo, ${f(x.b, 1)} % en días normales`}>
+          <span>{x.c}</span>
+          <div><i className="calor" style={{ width: `${(x.a / max) * 100}%` }} /><i className="normal" style={{ width: `${(x.b / max) * 100}%` }} /></div>
+          <span className="tab"><b>{f(x.a, 1)} %</b><br /><small>{f(x.b, 1)} %</small></span>
+          <span className={`dif tab ${x.a - x.b > 0.5 ? "sube" : ""}`}>{Math.abs(x.a - x.b) < 0.05 ? "" : x.a - x.b > 0 ? "+" : "−"}{f(Math.abs(x.a - x.b), 1)}</span>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 /**
  * Base de datos: Postgres (Neon) si existe DATABASE_URL; si no, PGlite local en .datos/pglite.
- * Solo guarda lo que cambia día a día. Los datos fijos se leen de archivos (src/lib/datos.ts),
- * así el sitio sigue visible aunque la base falle (RNF-05).
+ * Solo guarda la temperatura, que es lo único que cambia día a día: días observados recientes y pronóstico.
+ * La base histórica y el modelo son archivos fijos (src/lib/datos.ts), así el sitio sigue visible aunque la base falle.
  */
 import path from "node:path";
 import fs from "node:fs";
@@ -22,19 +22,8 @@ create table if not exists pronostico (
   cod_comuna text not null, fecha_emision text not null, fecha_objetivo text not null,
   tmean real, tmax real, tmin real, nivel smallint, confianza text, incierto boolean, version_umbral text,
   primary key (cod_comuna, fecha_emision, fecha_objetivo));
-create table if not exists cambio_nivel (
-  id serial primary key, fecha text not null, cod_comuna text not null,
-  nivel_anterior smallint, nivel_nuevo smallint not null, valor real, version_umbral text, creado text not null,
-  unique (cod_comuna, fecha));
-create table if not exists alerta_oficial (
-  id serial primary key, organismo text not null, tipo text not null,
-  territorio_tipo text not null, territorio_cod text not null, territorio_nombre text not null,
-  inicio text not null, termino text not null, enlace text not null, creado text not null, anulada boolean default false);
 create table if not exists fuente_estado (
   fuente text primary key, ultima_carga text, ultimo_dato text, resultado text, detalle text);
-create table if not exists carga (
-  id serial primary key, tipo text not null, archivo text, fecha text not null, estado text not null,
-  filas integer, resumen text, contenido text, reemplaza integer);
 create table if not exists ejecucion (
   id serial primary key, tarea text not null, inicio text not null, fin text, ok boolean, detalle text);
 create index if not exists pronostico_emision on pronostico (fecha_emision);

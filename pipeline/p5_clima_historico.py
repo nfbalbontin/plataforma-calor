@@ -120,6 +120,7 @@ def main():
     ap.add_argument("--por-minuto", type=float, default=60)
     ap.add_argument("--solo-sondeo", action="store_true")
     ap.add_argument("--ultima-temporada", type=int, default=2026)
+    ap.add_argument("--solo-capitales", action="store_true", help="solo las celdas de las capitales regionales, todas las temporadas")
     ap.add_argument("--bloques", default="", help="lista de bloques a procesar, p. ej. 3 (capitales regionales); vacío = todos")
     a = ap.parse_args()
 
@@ -175,7 +176,9 @@ def main():
     if a.bloques:
         permitidos = {int(b) for b in a.bloques.split(",")}
         cola = [x for x in cola if x[0] in permitidos]
-    cola.sort()
+    if a.solo_capitales:
+        cola = [x for x in cola if x[3] in capital]
+    cola.sort(key=lambda x: (x[2], x[3])) if a.solo_capitales else cola.sort()
     print(f"  pendientes: {len(cola)} temporadas-celda; presupuesto de esta corrida: {a.presupuesto:.0f} llamadas", flush=True)
 
     hechas = 0

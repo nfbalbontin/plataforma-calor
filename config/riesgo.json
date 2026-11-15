@@ -1,0 +1,11 @@
+{
+  "version": "riesgo-2026.1",
+  "niveles": ["Bajo", "Moderado", "Alto", "Muy alto"],
+  "cortes_exceso": [0.02, 0.05, 0.10],
+  "regla": "El nivel depende de cuánto suben las muertes esperadas con la temperatura pronosticada: bajo, menos de 2 %; moderado, 2 a 5 %; alto, 5 a 10 %; muy alto, 10 % o más.",
+  "dias_confianza_alta": 7,
+  "dias_pronostico": 16,
+  "tendencia_grados": 0.5,
+  "tope_vulnerabilidad": 3,
+  "manzana": "Índice relativo: el aumento de riesgo de la comuna multiplicado por la población vulnerable de la manzana (personas mayores, niños de 0 a 5 y personas con discapacidad) respecto del promedio de las manzanas de su comuna. No es un número de muertes."
+}

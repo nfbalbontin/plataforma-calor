@@ -3,30 +3,33 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navegacion } from "@/componentes/Navegacion";
 import { Tema } from "@/componentes/Tema";
+import { indiceHistoria } from "@/lib/datos";
+import { fechaLarga } from "@/lib/tiempo";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Calor extremo y salud · Chile (prototipo)",
-  description: "Prototipo no comercial para prevenir muertes por calor extremo: exposición, nivel estimado por comuna e impacto observado.",
+  title: "Calor y mortalidad en Chile",
+  description: "Dos preguntas sobre calor extremo y salud en Chile: si han aumentado las muertes y hospitalizaciones asociadas al calor, y dónde puede haber más con el calor que viene.",
 };
 
 const TEMA = `try{var t=localStorage.getItem('tema')||(matchMedia('(prefers-color-scheme: light)').matches?'claro':'oscuro');document.documentElement.dataset.tema=t}catch(e){}`;
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const indice = indiceHistoria();
   return (
     <html lang="es" className={inter.variable} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: TEMA }} /></head>
       <body>
-        <div className="aviso-prototipo" role="note"><strong>Prototipo no comercial.</strong> No emite alertas oficiales.</div>
+        <div className="aviso-prototipo" role="note"><strong>Estimaciones estadísticas, siempre con su rango.</strong> No es un sistema de alertas oficiales.</div>
         <header className="cabecera">
-          <a className="marca" href="/">Calor extremo <span>·</span> Chile</a>
+          <a className="marca" href="/">Calor y mortalidad <span>·</span> Chile</a>
           <Navegacion />
-          <div className="acciones"><Tema /><a className="icono" href="/login" data-tour="login">Ingresar</a></div>
+          <div className="acciones"><Tema /></div>
         </header>
         <main>{children}</main>
         <footer className="pie">
-          Fuentes: INE, Censo 2024 (CC BY-SA 4.0) · DEIS, Ministerio de Salud · Open-Meteo (CC BY 4.0). <a href="/metodologia">Metodología</a> · <a href="/estado">Estado de las fuentes</a>
+          Datos históricos hasta el {indice ? fechaLarga(indice.defunciones_hasta) : "sin dato"}. Fuentes: DEIS, Ministerio de Salud · INE, Censo 2024 · Open-Meteo (CC BY 4.0). <a href="/metodologia">Metodología y datos</a> · Autor: Nicolás Balbontín.
         </footer>
       </body>
     </html>

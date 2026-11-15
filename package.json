@@ -2,7 +2,7 @@
   "name": "plataforma-calor",
   "version": "0.1.0",
   "private": true,
-  "description": "Prototipo no comercial: prevención de muertes por calor extremo en Chile",
+  "description": "Calor y mortalidad en Chile: historia y riesgo futuro",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

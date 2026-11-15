@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite", "postgres"],
-  outputFileTracingIncludes: { "/**": ["./datos/**", "./config/**"] },
+  devIndicators: false,
+  outputFileTracingIncludes: { "/**": ["./datos/**", "./config/**", "./public/historia/indice.json", "./public/historia/pais.json"] },
 };
 
 export default config;

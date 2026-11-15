@@ -1,0 +1,39 @@
+{
+  "version": "diagnosticos-2026.1",
+  "nota": "Clasificación CIE-10 por categoría de 3 caracteres. Se aplica a la causa básica y a la causa externa de cada defunción. La insuficiencia cardíaca (I50) queda fuera a propósito.",
+  "niveles": [
+    {
+      "nivel": 1,
+      "nombre": "Directos",
+      "diagnosticos": "Golpe de calor y agotamiento por calor; exposición al calor natural excesivo; deshidratación",
+      "codigos": ["T67", "X30", "E86"],
+      "evidencia": "En mayores de 65 años las hospitalizaciones por golpe de calor se multiplican por 2,54 en olas de calor (Bobb, JAMA 2014). Las visitas a urgencias por enfermedad por calor suben 66 % en días de calor extremo (BMJ 2021). En Coquimbo los egresos por deshidratación suben 21 % (póster, Región de Coquimbo)."
+    },
+    {
+      "nivel": 2,
+      "nombre": "Fuertemente asociados",
+      "diagnosticos": "Trastornos de líquidos y electrolitos; insuficiencia renal; infección urinaria; septicemia; cardiopatía isquémica; accidente cerebrovascular; cardiopatía hipertensiva; diabetes; EPOC; infección respiratoria baja",
+      "codigos": ["E87", "N17-N19", "N39", "A40-A41", "I20-I25", "I60-I69", "I10-I15", "E10-E14", "J40-J47", "J12-J18"],
+      "evidencia": "Hospitalizaciones en olas de calor: líquidos y electrolitos 1,18 veces, insuficiencia renal 1,14, infección urinaria 1,10 y septicemia 1,06 (Bobb, JAMA 2014). Urgencias por enfermedad renal: 30 % más (BMJ 2021). En mortalidad el riesgo sube con la temperatura en cardiopatía isquémica, accidente cerebrovascular, cardiopatía hipertensiva, diabetes, enfermedad renal crónica, infección respiratoria baja y EPOC (Burkart, Lancet 2021)."
+    },
+    {
+      "nivel": 3,
+      "nombre": "Asociación moderada o en estudio",
+      "diagnosticos": "Trastornos mentales; infecciones intestinales; causas externas como ahogamientos, suicidios y agresiones",
+      "codigos": ["F00-F99", "A00-A09", "W65-W74", "X60-X84", "X85-Y09"],
+      "evidencia": "Urgencias por trastornos mentales: 8 % más (BMJ 2021). Urgencias por infección intestinal: 1,10 veces en olas de calor (Atlanta, EHP 2017). Las causas externas también se relacionan con la temperatura (Burkart, Lancet 2021)."
+    }
+  ],
+  "grupos_causa": [
+    ["Circulatorias", ["I00-I99"]],
+    ["Tumores", ["C00-D48"]],
+    ["Respiratorias", ["J00-J99"]],
+    ["COVID-19", ["U07-U07"]],
+    ["Endocrinas y metabólicas", ["E00-E90"]],
+    ["Digestivas", ["K00-K93"]],
+    ["Genitourinarias", ["N00-N99"]],
+    ["Mentales y del sistema nervioso", ["F00-G99"]],
+    ["Infecciosas", ["A00-B99"]],
+    ["Causas externas", ["S00-Y98"]]
+  ]
+}
