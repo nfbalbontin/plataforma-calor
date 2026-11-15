@@ -144,3 +144,30 @@ export function BarrasH({ filas, unidad }: { filas: { nombre: string; valor: num
     </div>
   );
 }
+
+/** Barras con rango (bajo a alto) por período. La barra sólida llega al valor bajo; la clara, al alto. */
+export function BarrasRango({ filas, unidad }: { filas: { t: string; bajo: number; alto: number; nota?: string }[]; unidad: string }) {
+  const W = 760, H = 250, ml = 44, mr = 10, mt = 22, mb = 30;
+  const max = Math.max(...filas.map((f) => f.alto), 0.0001);
+  const { tope, marcas } = escala(max * 1.1 < 1 ? 1 : max * 1.1);
+  const paso = (W - ml - mr) / Math.max(filas.length, 1), an = Math.min(70, paso * 0.6);
+  const y = (v: number) => mt + (H - mt - mb) * (1 - v / tope);
+  const n = (v: number) => v.toLocaleString("es-CL", { maximumFractionDigits: v < 10 ? 1 : 0 });
+  return (
+    <figure style={{ margin: 0 }}>
+      <div className="leyenda-graf"><span><span className="cuadro" style={{ background: "var(--barra)" }} />Escenario bajo</span><span><span className="cuadro" style={{ background: "var(--barra)", opacity: 0.4 }} />Hasta el escenario alto</span></div>
+      <svg className="grafico" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Rango de ${unidad} por mes`}>
+        {marcas.map((m) => <g key={m}><line className="guia" x1={ml} x2={W - mr} y1={y(m)} y2={y(m)} /><text x={ml - 6} y={y(m) + 4} textAnchor="end">{m.toLocaleString("es-CL")}</text></g>)}
+        {filas.map((f, i) => { const x = ml + i * paso + (paso - an) / 2; return (
+          <g key={f.t}>
+            <rect x={x} y={y(f.alto)} width={an} height={y(0) - y(f.alto)} rx={3} fill="var(--barra)" opacity={0.4}><title>{`${f.t}: ${n(f.bajo)} a ${n(f.alto)} ${unidad}${f.nota ? `. ${f.nota}` : ""}`}</title></rect>
+            <rect x={x} y={y(f.bajo)} width={an} height={y(0) - y(f.bajo)} rx={3} fill="var(--barra)"><title>{`${f.t}: ${n(f.bajo)} a ${n(f.alto)} ${unidad}`}</title></rect>
+            <text x={x + an / 2} y={y(f.alto) - 6} textAnchor="middle" style={{ fill: "var(--texto)", fontWeight: 700 }}>{n(f.bajo)} a {n(f.alto)}</text>
+            <text x={x + an / 2} y={H - 10} textAnchor="middle">{f.t}</text>
+          </g>
+        ); })}
+        <line className="eje" x1={ml} x2={W - mr} y1={y(0)} y2={y(0)} />
+      </svg>
+    </figure>
+  );
+}

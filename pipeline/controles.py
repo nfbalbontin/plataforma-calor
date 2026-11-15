@@ -57,13 +57,26 @@ um = json.loads((CONFIG / "umbrales.json").read_text())
 malos = [k for k, u in um["comunas"].items() if not (u["p50"] < u["p90"] < u["p95"] < u["p99"])]
 control("Umbrales ordenados (p50 < p90 < p95 < p99) en cada comuna", not malos, f"{len(um['comunas'])} comunas con umbral; {len(malos)} con error")
 for nombre in ("comunas", "regiones", "establecimientos", "dependencia", "vigilancia", "urgencias", "comuna_mes", "episodios", "impactlab",
-               "provincias", "def_region_dia", "def_comuna_mes", "def_calor_certificado", "manzana_stats", "urg_establecimiento", "evidencia_alerta"):
+               "provincias", "def_region_dia", "def_comuna_mes", "def_calor_certificado", "manzana_stats", "urg_establecimiento", "evidencia_alerta",
+               "motor_insumos", "proyeccion_mensual"):
     try:
         json.loads((DATOS / f"{nombre}.json").read_text(), parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
         ok = True
     except Exception as e:  # noqa: BLE001
         ok = False
     control(f"datos/{nombre}.json es JSON válido (sin NaN)", ok)
+# Motor de cálculo de los paneles de análisis
+if (DATOS / "motor_insumos.json").exists():
+    mi = json.loads((DATOS / "motor_insumos.json").read_text())
+    pm = json.loads((CONFIG / "parametros_motor.json").read_text())
+    control("Motor: la población por tramo suma la población nacional del Censo", sum(sum(r["pob"]) for r in mi["regiones"].values()) == 18480432
+            and sum(sum(c["pob"]) for c in mi["comunas"].values()) == 18480432)
+    control("Motor: tasas base positivas y crecientes con la edad en cada región", all(0 < r["tasa"][1] < r["tasa"][2] < r["tasa"][3] for r in mi["regiones"].values()))
+    control("Motor: RR y coeficientes ordenados (bajo ≤ alto)", 1 < pm["rr"]["bajo"] <= pm["rr"]["alto"] and pm["coef_verde"]["alto"] <= pm["coef_verde"]["bajo"] <= 0)
+    con_clima = [k for k, r in mi["regiones"].items() if r["clima"]]
+    control("Motor: regiones con clima histórico de su capital", len(con_clima) >= 1, f"{len(con_clima)} de 16: {con_clima}")
+    control("Motor: ningún exceso negativo ni mayor que 20 °C", all(0 < e <= 20 for r in mi["regiones"].values() if r["clima"] for e in r["clima"]["excesos"]))
+
 # Módulo AURA (solo si está construido)
 if (DATOS / "aura.json").exists():
     au = json.loads((DATOS / "aura.json").read_text())

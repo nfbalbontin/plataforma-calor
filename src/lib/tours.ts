@@ -55,3 +55,26 @@ export const TOUR_COMUNA: Paso[] = [
   { sel: "[data-tour=impacto]", titulo: "Impacto observado", texto: "Defunciones del último mes y señal de urgencias frente a lo habitual." },
   { sel: "[data-tour=vulnerable]", titulo: "Población vulnerable", texto: "Personas mayores, manzanas prioritarias y personas dependientes por centro de salud." },
 ];
+export const TOUR_DONDE: Paso[] = [
+  { titulo: "Ejemplo: dónde concentrar recursos", texto: "El ranking ordena las comunas por personas mayores y días de calor. La etiqueta dice si esa prioridad se mantiene con el riesgo bajo y con el alto." },
+  { sel: "[data-tour=filtros-donde]", titulo: "Filtros", texto: "Elige una región o una clase de robustez. El mapa y la tabla cambian juntos." },
+  { sel: "[data-tour=mapa-donde]", titulo: "Mapa por clase", texto: "Verde: prioridad robusta. Ámbar: depende del supuesto. Pincha una comuna para marcarla en la tabla." },
+  { sel: "[data-tour=tabla-donde]", titulo: "Tabla", texto: "Indicador, clase, muertes esperadas al año como rango y, como validación, las muertes observadas en olas de calor frente a lo habitual." },
+];
+export const TOUR_SIMULADOR: Paso[] = [
+  { titulo: "Ejemplo: más áreas verdes en la RM", texto: "Es un escenario hipotético, no un pronóstico. Se mueven los supuestos y se ve cuántas muertes cambia la medida." },
+  { sel: "[data-tour=sim-controles]", titulo: "Supuestos", texto: "Regiones, distribución por edad, días de temperatura extrema, grados sobre el promedio y cambio en áreas verdes. Quedan guardados en la dirección de la página." },
+  { sel: "[data-tour=sim-resultado]", titulo: "Resultado", texto: "Muertes sin la medida, con la medida y la diferencia, siempre como rango, con su etiqueta de robustez." },
+  { sel: "[data-tour=sim-supuestos]", titulo: "Supuestos activos", texto: "Los valores que usó este cálculo, con su fuente. Desde aquí se pasa a «Cuánto invertir» con las muertes evitadas ya cargadas." },
+];
+export const TOUR_PROYECCION: Paso[] = [
+  { titulo: "Ejemplo: qué meses vienen peores", texto: "Aplica el motor a las temperaturas pronosticadas. Indica tendencias, no días puntuales." },
+  { sel: "[data-tour=pro-filtros]", titulo: "Filtros", texto: "Región, comuna y tramo de edad." },
+  { sel: "[data-tour=pro-grafico]", titulo: "Muertes esperadas por mes", texto: "Cada barra es el rango del mes: combina el riesgo bajo y alto con la dispersión del ensamble. Al lado, la cifra del Climate Impact Lab como contraste." },
+  { sel: "[data-tour=pro-ranking]", titulo: "Lugares de mayor peligro", texto: "Comunas ordenadas por muertes esperadas o por tasa, con su mes de mayor riesgo y su etiqueta de robustez." },
+];
+export const TOUR_INVERSION: Paso[] = [
+  { titulo: "Ejemplo: ¿se justifica una medida?", texto: "Compara las muertes que la medida debe evitar para pagar su costo con las que evitaría en el escenario bajo y en el alto." },
+  { sel: "[data-tour=inv-entradas]", titulo: "Entradas", texto: "Territorio, costo anual y efectividad esperada. Si vienes del simulador, las muertes evitadas ya están cargadas." },
+  { sel: "[data-tour=inv-resultado]", titulo: "Resultado", texto: "El cálculo completo en una línea y la etiqueta: robusta si se justifica incluso con el escenario bajo." },
+];

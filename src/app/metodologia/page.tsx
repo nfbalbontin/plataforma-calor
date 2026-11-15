@@ -1,5 +1,5 @@
 import { Ayuda } from "@/componentes/Ayuda";
-import { aura, configAlerta, configEpisodios, configFuentes, configPrioridad, evidenciaAlerta, medidas, umbrales, vigilancia } from "@/lib/datos";
+import { aura, configAlerta, configEpisodios, configFuentes, configPrioridad, evidenciaAlerta, medidas, parametrosMotor, umbrales, vigilancia } from "@/lib/datos";
 import { TOUR_METODOLOGIA } from "@/lib/tours";
 
 export const revalidate = 3600;
@@ -7,7 +7,7 @@ const pct = (r: number | null) => (r == null ? "sin dato" : `${r >= 1 ? "+" : "�
 
 export default function Metodologia() {
   const cf = configFuentes(), um = umbrales(), pri = configPrioridad(), ep = configEpisodios(), vig = vigilancia(), cat = medidas(), au = aura();
-  const al = configAlerta(), ev = evidenciaAlerta(), r = au?.resumen;
+  const al = configAlerta(), ev = evidenciaAlerta(), r = au?.resumen, pm = parametrosMotor();
   return (
     <div className="pagina">
       <div className="titulo-fila"><h1>Metodología y fuentes de datos</h1><Ayuda pasos={TOUR_METODOLOGIA} /></div>
@@ -59,6 +59,28 @@ export default function Metodologia() {
         )}
         <p className="aviso info" style={{ marginTop: 8 }}>{al.limites}</p>
       </section>
+
+      {pm && (
+        <section className="seccion" id="motor">
+          <h2>Motor de cálculo de los paneles de análisis</h2>
+          <div className="formula" style={{ marginTop: 8 }}>{pm.formula}</div>
+          <div className="tabla-caja" style={{ marginTop: 8 }}>
+            <table>
+              <thead><tr><th>Parámetro</th><th>Valor</th><th>Fuente</th><th>Advertencia</th></tr></thead>
+              <tbody>
+                <tr><td>Riesgo relativo por °C sobre el umbral</td><td>{pm.rr.bajo.toLocaleString("es-CL")} (bajo) y {pm.rr.alto.toLocaleString("es-CL")} (alto)</td><td><a href={pm.rr.enlace} target="_blank" rel="noreferrer">{pm.rr.fuente}</a></td><td>{pm.rr.advertencia}</td></tr>
+                <tr><td>Umbral</td><td>Percentil {pm.umbral.percentil} local de la {pm.umbral.variable}, {pm.umbral.periodo}</td><td>{pm.umbral.fuente}</td><td>Una comuna sin serie propia usa el de la capital de su región.</td></tr>
+                <tr><td>Tasa base diaria por tramo de edad</td><td>Por región; tramos {pm.tramos.join(", ")}</td><td>{pm.tasa_base.fuente}</td><td>{pm.tasa_base.definicion}.</td></tr>
+                <tr><td>Áreas verdes: °C por punto porcentual</td><td>{pm.coef_verde.bajo.toLocaleString("es-CL")} (bajo) y {pm.coef_verde.alto.toLocaleString("es-CL")} (alto)</td><td><a href={pm.coef_verde.enlace_bajo} target="_blank" rel="noreferrer">{pm.coef_verde.fuente_bajo}</a> {pm.coef_verde.fuente_alto}</td><td>{pm.coef_verde.advertencia}</td></tr>
+                <tr><td>Valor de una vida estadística</td><td>$ {pm.valor_vida_estadistica.clp.toLocaleString("es-CL")}</td><td><a href={pm.valor_vida_estadistica.enlace} target="_blank" rel="noreferrer">{pm.valor_vida_estadistica.fuente}</a></td><td>{pm.valor_vida_estadistica.advertencia}</td></tr>
+                <tr><td>Efectividad de un plan de calor</td><td>{(pm.efectividad.por_defecto * 100).toLocaleString("es-CL")} % ({(pm.efectividad.bajo * 100).toLocaleString("es-CL")} a {(pm.efectividad.alto * 100).toLocaleString("es-CL")})</td><td><a href={pm.efectividad.enlace} target="_blank" rel="noreferrer">{pm.efectividad.fuente}</a></td><td>{pm.efectividad.advertencia}</td></tr>
+                <tr><td>Robustez</td><td>20 % superior; tres clases</td><td>Definición propia</td><td>{pm.robustez.regla}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="chico" style={{ marginTop: 6 }}>Archivo config/parametros_motor.json, versión {pm.version} del {pm.fecha}. Toda cifra de muertes se muestra como rango y solo por región o comuna.</p>
+        </section>
+      )}
 
       <section className="seccion">
         <h2>Cómo se calcula cada indicador</h2>

@@ -1,6 +1,6 @@
 /** Estado de cada fuente y alerta de actualización vencida (RF-36). */
 import { cargaVigente, estadosGuardados } from "./consultas";
-import { configFuentes, dependencia, fechaArchivo, impactlabSemilla, modulo, urgencias, vigilancia, type Fuente } from "./datos";
+import { configFuentes, dependencia, fechaArchivo, impactlabSemilla, modulo, proyeccionMensual, urgencias, vigilancia, type Fuente } from "./datos";
 import { esPeriodoCalido, hoyChile } from "./tiempo";
 
 export type EstadoFuente = Fuente & {
@@ -29,6 +29,7 @@ export async function estadoFuentes(ahora = new Date()): Promise<EstadoFuente[]>
         else if (semilla) { ultima = semilla.transcrito + "T12:00:00Z"; dato = `versión ${semilla.version}`; detalle = "Transcripción inicial de los totales por región."; }
         break;
       case "aura": ultima = iso(fechaArchivo("datos/aura.json")); break;
+      case "open-meteo-estacional": { const pr = proyeccionMensual(); if (pr) { ultima = pr.corrida; dato = `hasta ${pr.hasta}`; detalle = `${Object.keys(pr.regiones).length} regiones`; } break; }
       default: {
         const g = guardados[f.id];
         if (g) { ultima = g.ultima_carga; dato = g.ultimo_dato; detalle = g.detalle; }

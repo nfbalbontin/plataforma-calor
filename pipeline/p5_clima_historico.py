@@ -11,7 +11,7 @@ y 5.000 por hora. Por eso el programa:
   2. baja una temporada por celda, en orden de prioridad, hasta agotar el presupuesto;
   3. se puede volver a ejecutar: no repite lo ya descargado.
 
-Uso: python p5_clima_historico.py [--presupuesto 4000] [--por-minuto 60] [--solo-sondeo]
+Uso: python p5_clima_historico.py [--presupuesto 4000] [--por-minuto 60] [--solo-sondeo] [--bloques 3]
 """
 import argparse
 import json
@@ -46,7 +46,7 @@ def consultar(puntos, inicio, fin):
         "latitude": ",".join(str(p[1]) for p in puntos), "longitude": ",".join(str(p[0]) for p in puntos),
         "start_date": inicio, "end_date": fin, "daily": VARS, "models": MODELO, "timezone": "auto"})
     espera = 30
-    for intento in range(8):
+    for intento in range(40):   # el servidor histórico se cae a ratos: se insiste con esperas crecientes
         # curl del sistema con IPv4: el Python 3.9 de macOS falla con este servidor y por IPv6 se cuelga.
         r = subprocess.run(["curl", "-s", "-4", "-m", "90", URL + "?" + params], capture_output=True, text=True)
         try:
@@ -54,6 +54,7 @@ def consultar(puntos, inicio, fin):
         except ValueError:
             print(f"    respuesta ilegible (curl {r.returncode}); reintento en {espera}s", flush=True)
             time.sleep(espera)
+            espera = min(300, espera + 30)
             continue
         if isinstance(d, dict) and d.get("error"):
             motivo = str(d.get("reason", ""))
@@ -119,6 +120,7 @@ def main():
     ap.add_argument("--por-minuto", type=float, default=60)
     ap.add_argument("--solo-sondeo", action="store_true")
     ap.add_argument("--ultima-temporada", type=int, default=2026)
+    ap.add_argument("--bloques", default="", help="lista de bloques a procesar, p. ej. 3 (capitales regionales); vacío = todos")
     a = ap.parse_args()
 
     comunas = [c for c in json.loads((DATOS / "comunas.json").read_text()) if c["punto_clima"]]
@@ -170,6 +172,9 @@ def main():
                 bloque = 7
             if not (HIST / rep / f"{t}.json").exists():
                 cola.append((bloque, -carga[rep], -t, rep, t))
+    if a.bloques:
+        permitidos = {int(b) for b in a.bloques.split(",")}
+        cola = [x for x in cola if x[0] in permitidos]
     cola.sort()
     print(f"  pendientes: {len(cola)} temporadas-celda; presupuesto de esta corrida: {a.presupuesto:.0f} llamadas", flush=True)
 

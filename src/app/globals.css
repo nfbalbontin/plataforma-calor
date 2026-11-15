@@ -246,3 +246,21 @@ details.metodo p, details.metodo div { margin-top: 6px; max-width: 95ch; }
 .tabla-mini th { position: static; background: transparent; }
 video { width: 100%; border-radius: var(--radio); border: 1px solid var(--borde); background: #000; display: block; }
 .enlace-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--enlace); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Clasificación de robustez: misma etiqueta y color en toda la plataforma */
+.rob { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 750; white-space: nowrap; }
+.rob::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: currentColor; }
+.rob.robusta { border: 1.5px solid var(--rob-robusta); color: var(--rob-robusta); }
+.rob.depende { border: 1.5px solid var(--rob-depende); color: var(--rob-depende); }
+.rob.no { border: 1.5px dashed var(--texto-3); color: var(--texto-3); }
+:root { --rob-robusta: #4fd1a1; --rob-depende: #f5a623; }
+:root[data-tema="claro"] { --rob-robusta: #0c7d55; --rob-depende: #a86200; }
+.aviso-fijo { border-left: 4px solid var(--acento); background: var(--panel); padding: 8px 12px; border-radius: 6px; font-size: 13.5px; }
+.supuestos { font-size: 12.5px; }
+.supuestos td, .supuestos th { padding: 5px 8px; }
+input[type="range"] { padding: 0; accent-color: var(--acento); }
+.control { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; margin-bottom: 12px; }
+.control label { margin: 0; }
+.control output { font-weight: 800; font-variant-numeric: tabular-nums; }
+.control input[type="range"] { grid-column: 1 / -1; }
+.formula { font-variant-numeric: tabular-nums; background: var(--superficie); border: 1px solid var(--borde-suave); border-radius: 8px; padding: 10px 12px; font-size: 14px; overflow-x: auto; white-space: nowrap; }

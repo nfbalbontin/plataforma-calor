@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { aCsv, respuestaCsv } from "@/lib/csv";
 import { comunaMes, comunas, dependencia, episodios, prioridadDe, umbrales, vigilancia } from "@/lib/datos";
+import { filasDonde, rankingPeligro } from "@/lib/analisis";
 import { senalComuna } from "@/lib/impacto";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,14 @@ export async function GET(_: Request, { params }: { params: Promise<{ tabla: str
   if (tabla === "comunas") {
     return respuestaCsv("comunas_censo2024.csv", aCsv(["cod_comuna", "comuna", "cod_region", "region", "poblacion", "pob_0_64", "pob_65_74", "pob_75_84", "pob_85_mas", "mayores_60_en_manzanas", "manzanas", "manzanas_prioridad_alta", "mayores_60_en_prioridad_alta", "hogares_solo_mayores", "lon_punto_clima", "lat_punto_clima"],
       comunas().map((c) => [c.cod, c.nombre, c.cod_region, c.region, c.pob.total, c.pob.e0_64, c.pob.e65_74, c.pob.e75_84, c.pob.e85_mas, c.mayores60, c.n_manzanas, prioridadDe(c).n_alta, prioridadDe(c).mayores_alta, c.hogares_solo_mayores, c.punto_clima?.[0], c.punto_clima?.[1]])));
+  }
+  if (tabla === "analisis-donde") {
+    return respuestaCsv("donde_actuar_comunas.csv", aCsv(["posicion", "cod_comuna", "comuna", "region", "poblacion_65_mas", "dias_al_ano_sobre_umbral", "indicador", "muertes_ano_bajo", "muertes_ano_alto", "robustez", "clima", "olas_calor_defunciones_observadas", "olas_calor_defunciones_habituales", "olas_calor_dias"],
+      filasDonde().map((f) => [f.pos, f.cod, f.nombre, f.region, f.pob65, f.dias, f.indicador == null ? null : Math.round(f.indicador), f.muertes?.[0].toFixed(2), f.muertes?.[1].toFixed(2), f.clase, f.climaPropio ? "serie propia" : f.dias == null ? "sin serie" : "capital regional", f.validacion?.[0], f.validacion?.[1], f.validacion?.[2]])));
+  }
+  if (tabla === "analisis-proyeccion") {
+    return respuestaCsv("proyeccion_mensual_comunas.csv", aCsv(["cod_comuna", "comuna", "region", "mes_mayor_riesgo", "dias_sobre_umbral_ese_mes", "cambio_dias_frente_a_mes_normal", "muertes_esperadas_bajo", "muertes_esperadas_alto", "tasa_100mil_bajo", "tasa_100mil_alto", "poblacion_75_mas", "robustez"],
+      rankingPeligro().map((f) => [f.cod, f.nombre, f.region, f.mes, f.dias.toFixed(1), f.cambio?.toFixed(1), f.muertes[0].toFixed(2), f.muertes[1].toFixed(2), f.tasa100k[0].toFixed(2), f.tasa100k[1].toFixed(2), f.pob75, f.clase])));
   }
   return NextResponse.json({ error: "tabla desconocida" }, { status: 404 });
 }

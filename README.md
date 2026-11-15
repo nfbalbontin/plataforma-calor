@@ -86,6 +86,26 @@ ninguna página fija consulta la base.
 - **Ingreso** en `/login`; `/admin` redirige ahí. Metodología y Estado muestran la API o descarga de cada fuente; se quitó la columna de permisos.
 - Datos nuevos: `pipeline/p8_extras.py` (provincias, defunciones filtrables, causa certificada por calor, urgencias por establecimiento, evidencia de la regla).
 
+## Paneles de análisis (15-11)
+
+Cuatro paneles en `/analisis` con un solo motor de cálculo (`src/lib/motor.ts`, parámetros en `config/parametros_motor.json`):
+
+| Panel | Ruta | Qué hace |
+|---|---|---|
+| 1. Dónde actuar | `/analisis/donde` | Ranking de comunas por personas de 65+ × días sobre el umbral; robustez por muertes esperadas con RR bajo y alto; validación con olas de calor |
+| 2. Simulador | `/analisis/simulador` | Escenarios hipotéticos: regiones, edad, días, grados y áreas verdes; parámetros en la URL; descarga CSV |
+| 3. Proyección mensual | `/analisis/proyeccion` | Motor aplicado al pronóstico de 16 días y al estacional; ranking de comunas de mayor peligro |
+| 4. Cuánto invertir | `/analisis/inversion` | Costo ÷ valor de una vida estadística contra las muertes evitadas en cada escenario |
+
+- Insumos: `pipeline/p9_motor.py` (población por tramo, tasas base, clima por territorio, efecto de áreas verdes con AURA) y
+  `pipeline/p10_estacional.py` (pronóstico estacional; también corre semanalmente en `.github/workflows/proyeccion-semanal.yml`, sin probar en GitHub).
+- El clima es el de la capital de cada región, salvo las comunas de la RM, que tienen serie propia. Una región entra a los paneles cuando
+  su capital tiene serie histórica: `p5_clima_historico.py --bloques 3`, luego `p6`, `p9` y `p10`.
+- El pronóstico estacional crudo trae sesgo (daba 21 a 26 días sobre el umbral por mes en Santiago): se usa la anomalía mensual del modelo,
+  sumada a los días históricos de cada mes.
+- Límite del Panel 1: con un umbral por percentil local casi todas las comunas tienen los mismos días sobre él, así que el orden lo decide la población de 65+.
+- No se encontró un riesgo relativo por grado estimado solo con datos chilenos: se usan los extremos del intervalo de Kephart et al. (2022), ciudades latinoamericanas.
+
 ## Requisitos no funcionales
 
 | Requisito | Estado |

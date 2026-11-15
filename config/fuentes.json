@@ -158,6 +158,23 @@
       "conexion": "API: https://api.open-meteo.com/v1/forecast (días recientes y pronóstico de 16 días) y https://archive-api.open-meteo.com/v1/archive (serie histórica, modelo era5_seamless)"
     },
     {
+      "id": "open-meteo-estacional",
+      "nombre": "Open-Meteo, pronóstico estacional",
+      "titular": "Open-Meteo (modelos ECMWF SEAS5 y EC46)",
+      "que": "Anomalía mensual de la temperatura máxima y series diarias de los 51 miembros del ensamble, por región.",
+      "uso": "Proyección mensual de muertes esperadas (panel de análisis).",
+      "transformacion": "La anomalía de cada miembro se suma a los días históricos de cada mes; no se usa la temperatura cruda del modelo, que no trae ajuste de sesgo.",
+      "licencia": "Datos CC BY 4.0; API gratuita solo para uso no comercial.",
+      "cita": "Open-Meteo, Seasonal Forecast API. Modelos ECMWF SEAS5 y EC46.",
+      "enlace": "https://open-meteo.com/en/docs/seasonal-forecast-api",
+      "cobertura": "Capital de cada región con umbral",
+      "frecuencia": "Semanal, automática (GitHub Actions)",
+      "tolerancia_dias": 10,
+      "tipo": "api",
+      "modulo": null,
+      "conexion": "API: https://seasonal-api.open-meteo.com/v1/seasonal (monthly=temperature_max24h_2m_anomaly y daily=temperature_2m_max)"
+    },
+    {
       "id": "dmc",
       "nombre": "Servicios web de la DMC",
       "titular": "Dirección Meteorológica de Chile",

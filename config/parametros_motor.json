@@ -1,0 +1,56 @@
+{
+  "version": "motor-2026.1",
+  "fecha": "2026-11-15",
+  "formula": "muertes = población del tramo × tasa base diaria del tramo × (RR ^ max(0, T − umbral) − 1), sumado sobre días y tramos",
+  "rr": {
+    "bajo": 1.046,
+    "alto": 1.067,
+    "unidad": "riesgo relativo de muerte por cada 1 °C sobre el umbral",
+    "fuente": "Kephart, J. L. y colaboradores (2022). City-level impact of extreme temperatures and mortality in Latin America. Nature Medicine, 28, 1700-1705. Riesgo relativo de 1,057 (IC 95 %: 1,046 a 1,067) por cada 1 °C sobre el percentil 95 de la temperatura media, en 326 ciudades latinoamericanas, incluidas ciudades chilenas.",
+    "enlace": "https://doi.org/10.1038/s41591-022-01872-6",
+    "consultado": "2026-11-15",
+    "advertencia": "No se encontró una estimación por grado hecha solo con datos chilenos: se usan los extremos del intervalo de confianza del estudio latinoamericano. El estudio mide la temperatura media sobre el percentil 95; aquí se aplica a la máxima sobre el percentil 90. La calibración propia con defunciones del DEIS reemplazará estos valores."
+  },
+  "umbral": {
+    "variable": "temperatura máxima diaria",
+    "percentil": 90,
+    "periodo": "noviembre a marzo",
+    "fuente": "config/umbrales.json (Open-Meteo, reanálisis ERA5; elaboración propia)"
+  },
+  "tasa_base": {
+    "definicion": "Defunciones de noviembre a marzo de 2015-2019 y 2023-2025, por región y tramo de edad, dividido por la población del Censo 2024 y por los días del período",
+    "fuente": "DEIS, Ministerio de Salud (defunciones) e INE, Censo 2024 (población por grupos quinquenales)"
+  },
+  "tramos": ["0-14", "15-64", "65-74", "75+"],
+  "coef_verde": {
+    "bajo": -0.010,
+    "alto": -0.049,
+    "unidad": "°C de cambio en la temperatura por cada punto porcentual más de cobertura arbórea",
+    "fuente_bajo": "Estudio de campo en Tacoma (EE. UU.): 1,0 °C menos al pasar de 0 a 100 % de cobertura arbórea, citado junto a un metaanálisis global de 0,3 °C por cada 10 % en World Resources Institute, «Urban trees cooling potential».",
+    "enlace_bajo": "https://www.wri.org/insights/urban-trees-cooling-potential",
+    "fuente_alto": "Estimación propia con los datos de AURA en la RM: pendiente de la temperatura de verano de día según la cobertura arbórea de la zona climática local, incluido el suelo desnudo, comparando manzanas de una misma comuna (ver datos/motor_insumos.json, verde_aura).",
+    "advertencia": "Con AURA, la pendiente calculada solo entre zonas con árboles es cercana a cero y con signo contrario (+0,012 °C por punto), por lo que el valor bajo se toma de la literatura. Fuera de la RM se aplica el mismo rango como supuesto declarado.",
+    "consultado": "2026-11-15"
+  },
+  "valor_vida_estadistica": {
+    "clp": 2305001400,
+    "fuente": "Ministerio de Desarrollo Social y Familia, División de Evaluación Social de Inversiones. Precios Sociales 2025 (31 de marzo de 2025): valor de una vida estadística.",
+    "enlace": "https://sni.gob.cl/wp-content/uploads/Precios_Sociales_2025.pdf",
+    "consultado": "2026-11-15",
+    "advertencia": "No se encontró un informe de precios sociales 2026. El valor mide la disposición social a pagar por reducir el riesgo de muerte; no es el valor de una vida."
+  },
+  "efectividad": {
+    "por_defecto": 0.252,
+    "bajo": 0.198,
+    "alto": 0.319,
+    "fuente": "The effectiveness of heat prevention plans in reducing heat-related mortality across Europe. Environmental Research Letters (2025): los planes de prevención se asocian a 25,2 % (IC 95 %: 19,8 a 31,9) menos muertes atribuibles al calor extremo, en 102 localidades de 14 países europeos.",
+    "enlace": "https://www.santepubliquefrance.fr/en/node/37874",
+    "consultado": "2026-11-15",
+    "advertencia": "Evidencia europea; no hay una evaluación equivalente en Chile."
+  },
+  "robustez": {
+    "fraccion_superior": 0.2,
+    "clases": {"robusta": "Robusta", "depende": "Depende del supuesto", "no": "No se sostiene"},
+    "regla": "Cada conclusión se evalúa con el escenario bajo y con el alto: robusta si se cumple en ambos, depende del supuesto si se cumple en uno, no se sostiene si en ninguno."
+  }
+}

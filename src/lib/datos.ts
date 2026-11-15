@@ -141,3 +141,11 @@ export type EvidenciaAlerta = { territorio: string; periodo: string; metodo: str
 export const evidenciaAlerta = () => leer<EvidenciaAlerta | null>("datos/evidencia_alerta.json", null);
 export type ConfigAlerta = { version: string; fecha: string; estados: string[]; comuna: { estado: number; regla: string; respaldo: string }[]; dias_seguidos_alerta: number; dias_anticipacion: number; territorio: { fraccion_poblacion: number; cobertura_minima: number; regla: string }; manzana: string; limites: string };
 export const configAlerta = () => leer<ConfigAlerta>("config/alerta.json", { version: "", fecha: "", estados: [], comuna: [], dias_seguidos_alerta: 3, dias_anticipacion: 2, territorio: { fraccion_poblacion: 0.25, cobertura_minima: 0.5, regla: "" }, manzana: "", limites: "" });
+
+// ---- Paneles de análisis: insumos y parámetros del motor, y pronóstico estacional ----
+import type { Insumos, Parametros } from "./motor";
+export const insumosMotor = () => leer<Insumos | null>("datos/motor_insumos.json", null);
+export const parametrosMotor = () => leer<Parametros | null>("config/parametros_motor.json", null);
+export type ProyeccionRegion = { capital: string; umbral: number; miembros: number; diario: [string, number][]; meses: Record<string, { anomalia: number; desvios: number[]; normal: number | null }> };
+export type Proyeccion = { corrida: string; modelo: string; fuente: string; metodo: string; hasta: string; regiones_omitidas: string[]; regiones: Record<string, ProyeccionRegion> };
+export const proyeccionMensual = () => leer<Proyeccion | null>("datos/proyeccion_mensual.json", null);
