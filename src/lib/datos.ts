@@ -29,6 +29,8 @@ export type Comuna = {
 export type Region = { cod: string; nombre: string; n_comunas: number; pob: Pob; mayores60: number; bbox: [number, number, number, number] | null };
 export const comunas = () => leer<Comuna[]>("datos/comunas.json", []);
 export const regiones = () => leer<Region[]>("datos/regiones.json", []);
+export type Provincia = { cod: string; nombre: string; cod_region: string; comunas: string[] };
+export const provincias = () => leer<Provincia[]>("datos/provincias.json", []);
 
 export type Hospital = { cod: string; antiguo: string | null; nombre: string; ss: string; comuna: string; lat: number; lon: number; complejidad: string | null; con_urgencias: boolean; area: string[] };
 export type Territorio = {

@@ -11,3 +11,6 @@ __pycache__/
 datos/aura.json
 public/teselas/*_aura.pmtiles
 public/descargas/manzanas_aura/
+.vercel
+.env*
+!.env.example

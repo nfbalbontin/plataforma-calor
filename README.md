@@ -5,7 +5,7 @@ Sitio público de solo lectura que responde dos preguntas, y nada más:
 | Módulo | Pregunta | Ruta |
 |---|---|---|
 | Historia | ¿Han aumentado las muertes y hospitalizaciones asociadas al calor, y dónde? | `/historia`, `/historia/region/13`, `/historia/comuna/13101`, `/historia/hospital/109100` |
-| Riesgo futuro | ¿Dónde puede morir u hospitalizarse más gente con el calor que viene? | `/riesgo` (admite `?region=13`, `?comuna=13101`, `?dia=3`) |
+| Riesgo futuro | ¿Dónde puede morir u hospitalizarse más gente con el calor que viene? | `/riesgo` (admite `?region=13`, `?comuna=13101`, `?dia=3`). Dentro de una región las comunas o provincias se pintan por sus muertes potenciales, por tasa o por nivel |
 
 `/metodologia` explica fuentes, transformaciones, diagnósticos, territorio, modelo, validación y límites.
 No hay cuentas, carga de archivos, alertas oficiales, notificaciones ni simulación de políticas.
@@ -22,6 +22,7 @@ La base histórica es fija: se genera una vez con los programas de `pipeline/` y
 | 4. Modelo y validación | `e4_modelo.py` | `datos/modelo.json`, `.trabajo/modelo/` | veranos reservados, comparación con el estudio UC, sensibilidad |
 | 5. Historia | `e5_historia.py` | `public/historia/` (un archivo por lugar), `datos/riesgo_base.json` | valores finitos; 1 país, 16 regiones, 346 comunas y los hospitales |
 | 6. Riesgo | `e6_riesgo.py`, `p10_estacional.py` | `datos/clima_comunas.json`, `datos/proyeccion_mensual.json` | |
+| Puntos de manzana | `e7_manzanas.py` | `public/manzanas/<comuna>.json` | un punto por manzana con población, para verlas desde lejos |
 | Territorio y teselas (ya hechas) | `p1_territorio.py`, `p2_teselas.py`, `p7_aura.py` | `datos/comunas.json`, `public/teselas/` | |
 
 Todos corren con el Python de `../.venv` desde `pipeline/`. Orden tras cambiar datos: e1, e2, p5, e4, e5, e6.
