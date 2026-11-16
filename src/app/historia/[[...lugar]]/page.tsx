@@ -3,7 +3,7 @@ import { Historia } from "@/componentes/Historia";
 import { indiceHistoria } from "@/lib/datos";
 import { archivoDe } from "@/lib/historia";
 
-export const metadata = { title: "Historia · Calor y mortalidad en Chile" };
+export const metadata = { title: "Análisis histórico · Calor y mortalidad en Chile" };
 
 /** Módulo Historia: la misma pantalla para Chile, región, comuna y hospital. */
 export default async function Pagina({ params }: { params: Promise<{ lugar?: string[] }> }) {

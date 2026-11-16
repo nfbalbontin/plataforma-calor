@@ -101,3 +101,42 @@ export const fmt = (v: number | null | undefined, dec = 0) => (v == null || Numb
 export function rangoTexto(lo: number, hi: number, dec = 0): string {
   return `entre ${fmt(Math.max(0, lo), dec)} y ${fmt(Math.max(0, hi), dec)}`;
 }
+
+/** Qué incluye cada categoría del perfil de fallecidos (se abre al hacer clic). */
+export const DEFINICIONES: Record<string, Record<string, string>> = {
+  nivel: {
+    "Directos": "Golpe de calor y agotamiento por calor (T67), exposición al calor natural excesivo (X30) y deshidratación (E86). Son las causas que el certificado atribuye al calor; casi nunca se anotan.",
+    "Fuertemente asociados": "Trastornos de líquidos y electrolitos (E87), insuficiencia renal (N17 a N19), infección urinaria (N39), septicemia (A40, A41), cardiopatía isquémica (I20 a I25), accidente cerebrovascular (I60 a I69), cardiopatía hipertensiva (I10 a I15), diabetes (E10 a E14), EPOC (J40 a J47) e infección respiratoria baja (J12 a J18). Los estudios muestran que aumentan con el calor.",
+    "Asociación moderada": "Trastornos mentales (F00 a F99), infecciones intestinales (A00 a A09) y causas externas: ahogamientos (W65 a W74), suicidios (X60 a X84) y agresiones (X85 a Y09).",
+    "Otras causas": "Todas las demás causas de muerte. La insuficiencia cardíaca (I50) queda aquí a propósito: en olas de calor no aumenta.",
+  },
+  causa: {
+    "Circulatorias": "Enfermedades del sistema circulatorio (I00 a I99): infarto, accidente cerebrovascular, insuficiencia cardíaca, hipertensión, entre otras.",
+    "Tumores": "Cánceres y otros tumores (C00 a D48).",
+    "Respiratorias": "Enfermedades del sistema respiratorio (J00 a J99): neumonía, EPOC, asma, entre otras.",
+    "COVID-19": "COVID-19 como causa básica (U07), desde 2020.",
+    "Endocrinas y metabólicas": "Diabetes, deshidratación, trastornos de líquidos y otras (E00 a E90).",
+    "Digestivas": "Enfermedades del sistema digestivo (K00 a K93): cirrosis, entre otras.",
+    "Genitourinarias": "Enfermedades del riñón y de las vías urinarias, entre otras (N00 a N99).",
+    "Mentales y del sistema nervioso": "Demencias, alzhéimer, trastornos mentales y del sistema nervioso (F00 a G99).",
+    "Infecciosas": "Enfermedades infecciosas y parasitarias (A00 a B99), incluida la septicemia.",
+    "Causas externas": "Accidentes, caídas, ahogamientos, suicidios y agresiones (S00 a Y98).",
+    "Otras": "Las demás causas, incluidas las mal definidas.",
+  },
+  lugar: {
+    "Casa": "Murió en su casa.",
+    "Hospital o clínica": "Murió en un establecimiento de salud. No dice en cuál.",
+    "Otro": "Vía pública, lugar de trabajo, hogar de ancianos u otro lugar.",
+  },
+  edad: { "0 a 64": "Menores de 65 años.", "65 a 79": "Personas mayores de 65 a 79 años.", "80 o más": "Personas de 80 años o más, el grupo más afectado por el calor." },
+};
+
+/** Términos que usa la pantalla. */
+export const GLOSARIO: [string, string][] = [
+  ["Verano", "La temporada cálida: del 1 de noviembre al 31 de marzo. «Verano 2019-20» va de noviembre de 2019 a marzo de 2020."],
+  ["Día de calor extremo", "Día cuya temperatura máxima supera el percentil 95 de los veranos de ese lugar: uno de los 5 % más calurosos."],
+  ["Ola de calor", "Tres o más días seguidos con la máxima sobre el percentil 90 del lugar."],
+  ["Muertes atribuibles al calor", "Las muertes que no habrían ocurrido sin el calor de esos días. Es una estimación estadística: no es un conteo de certificados."],
+  ["Rango", "Intervalo de 95 %: la cifra real está, con alta probabilidad, entre esos dos valores."],
+  ["Umbral", "Temperatura desde la cual las muertes empiezan a subir en esa región."],
+];

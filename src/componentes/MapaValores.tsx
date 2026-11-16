@@ -23,7 +23,7 @@ export function MapaValores({ modo, valores, nombres, bbox, formato, alPinchar, 
   bbox: [number, number, number, number] | null; formato: (v: number) => string; alPinchar?: (cod: string) => void; alto?: number;
 }) {
   const caja = useRef<HTMLDivElement>(null), mapa = useRef<Mapa | null>(null);
-  const [listo, setListo] = useState(false), [tema, setTema] = useState(0), [tip, setTip] = useState<{ x: number; y: number; t: string } | null>(null);
+  const [listo, setListo] = useState(false), [tema, setTema] = useState(0), [tamano, setTamano] = useState(0), [tip, setTip] = useState<{ x: number; y: number; t: string } | null>(null);
   const ref = useRef({ modo, valores, nombres, formato, alPinchar }); ref.current = { modo, valores, nombres, formato, alPinchar };
   const cs = useMemo(() => cortes(Object.values(valores)), [valores]);
   const llave = (cod: string) => (ref.current.modo === "region" ? cod.slice(0, 2) : cod);
@@ -48,8 +48,10 @@ export function MapaValores({ modo, valores, nombres, bbox, formato, alPinchar, 
     });
     m.on("mouseout", () => setTip(null));
     mapa.current = m;
+    const ro = new ResizeObserver(() => { m.resize(); setTamano((x) => x + 1); });
+    ro.observe(caja.current);
     const t = () => setTema((x) => x + 1); window.addEventListener("calor:tema", t);
-    return () => { window.removeEventListener("calor:tema", t); m.remove(); mapa.current = null; maplibregl.removeProtocol("pmtiles"); };
+    return () => { ro.disconnect(); window.removeEventListener("calor:tema", t); m.remove(); mapa.current = null; maplibregl.removeProtocol("pmtiles"); };
   }, []);
   useEffect(() => {
     const m = mapa.current; if (!m || !listo) return;
@@ -68,7 +70,7 @@ export function MapaValores({ modo, valores, nombres, bbox, formato, alPinchar, 
     const m = mapa.current; if (!m || !listo) return;
     if (bbox) m.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], { padding: 30, bearing: 0, duration: 0 });
     else m.fitBounds(CHILE, { padding: 20, bearing: caja.current!.clientWidth > caja.current!.clientHeight * 1.15 ? 90 : 0, duration: 0 });
-  }, [bbox, listo]);
+  }, [bbox, listo, tamano]);
   return (
     <div>
       <div style={{ position: "relative", height: alto, borderRadius: 10, overflow: "hidden", border: "1px solid var(--borde-suave)" }}>

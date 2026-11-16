@@ -7,7 +7,7 @@ type Paso = { sel?: string; titulo: string; texto: string };
 /** Pasos del recorrido de cada página. Los pasos cuyo elemento no existe en pantalla se saltan. */
 const PASOS: [prefijo: string, pasos: Paso[]][] = [
   ["/historia", [
-    { titulo: "Historia", texto: "Cómo han evolucionado las muertes y hospitalizaciones frente a la temperatura. La misma pantalla se repite para Chile, región, comuna y hospital." },
+    { titulo: "Análisis histórico", texto: "Cómo han evolucionado las muertes y hospitalizaciones frente a la temperatura. La misma pantalla se repite para Chile, región, comuna y hospital." },
     { sel: "[data-tour=ruta]", titulo: "Dónde estás", texto: "La ruta muestra el lugar. Un clic en un nivel superior sube." },
     { sel: "[data-tour=filtros]", titulo: "Filtros", texto: "Indicador, período, edad y sexo. «Mostrar» cambia todas las cifras entre número y por 1.000 habitantes." },
     { sel: "[data-tour=cifras]", titulo: "Las tres cifras", texto: "Muertes atribuibles al calor con su rango, cómo cambian cada 10 años y cuántos días de calor extremo hay por verano." },
@@ -23,6 +23,7 @@ const PASOS: [prefijo: string, pasos: Paso[]][] = [
     { sel: "[data-tour=mapa-modo]", titulo: "Pronóstico o simulación", texto: "Usa el pronóstico de los próximos 16 días o fija una temperatura máxima para todo Chile y mira cómo cambia el mapa." },
     { sel: "[data-tour=mapa-medida]", titulo: "Número o tasa", texto: "Cambia todas las cifras entre número de muertes y muertes por 100.000 habitantes." },
     { sel: "[data-tour=mapa-pintar]", titulo: "Cómo se pinta", texto: "Por muertes potenciales, comparando los lugares entre sí, o por nivel de riesgo." },
+    { sel: "[data-tour=mapa-aura]", titulo: "Calor urbano (AURA)", texto: "Solo en la Región Metropolitana: AURA estima qué manzanas son más calurosas o más frescas que el promedio de su comuna. Al activarlo, el mapa suma ese calor a cada manzana." },
     { sel: "[data-tour=dias]", titulo: "Cada día", texto: "Elige el día. Del día 8 en adelante el pronóstico es orientativo." },
     { sel: "[data-tour=potenciales]", titulo: "Muertes potenciales", texto: "Siempre con su rango. A nivel de manzana solo hay un índice relativo." },
     { sel: "[data-tour=lugares]", titulo: "Ranking", texto: "Los lugares ordenados por muertes potenciales del día elegido." },
@@ -36,7 +37,7 @@ const PASOS: [prefijo: string, pasos: Paso[]][] = [
   ["/", [
     { titulo: "Calor y mortalidad en Chile", texto: "Dos preguntas: si han aumentado las muertes por calor, y dónde puede haber más con el calor que viene." },
     { sel: "[data-tour=cifra]", titulo: "La cifra", texto: "Muertes atribuibles al calor en Chile desde 1990, con su rango." },
-    { sel: "[data-tour=entrada-historia]", titulo: "Historia", texto: "Temperatura contra muertes y hospitalizaciones, de Chile al hospital." },
+    { sel: "[data-tour=entrada-historia]", titulo: "Análisis histórico", texto: "Temperatura contra muertes y hospitalizaciones, de Chile al hospital." },
     { sel: "[data-tour=entrada-riesgo]", titulo: "Riesgo futuro", texto: "El mapa según el pronóstico, de la región a la manzana." },
     { sel: "[data-tour=ayuda]", titulo: "Volver a ver", texto: "Este recorrido se abre al entrar a cada página. Puedes repetirlo aquí." },
   ]],

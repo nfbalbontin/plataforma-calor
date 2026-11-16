@@ -210,12 +210,18 @@ OLAS_L["pais"] = PAIS_OLAS
 CAUSAS = [g[0] for g in json.loads((PLATAFORMA / "config/diagnosticos.json").read_text())["grupos_causa"]] + ["Otras", "CIE-9"]
 DIM = {"edad": ["0 a 64", "65 a 79", "80 o más"], "sexo": ["Hombres", "Mujeres"], "lugar": ["Casa", "Hospital o clínica", "Otro"],
        "causa": CAUSAS[:-1], "nivel": ["Directos", "Fuertemente asociados", "Asociación moderada", "Otras causas"]}
+for sx in ("H", "M"):                     # cruces: edad y causa dentro de cada sexo
+    DIM[f"edad_{sx}"], DIM[f"causa_{sx}"] = DIM["edad"], DIM["causa"]
 P = {k: np.zeros((nC, nT, 2, len(v))) for k, v in DIM.items()}
 for col, clave, mapa in (("e", "edad", {0: 0, 1: 1, 2: 2}), ("sexo", "sexo", {"H": 0, "M": 1}), ("lugar", "lugar", {"C": 0, "H": 1, "O": 2}),
                          ("causa", "causa", {c: i for i, c in enumerate(CAUSAS[:-1])}), ("k", "nivel", {1: 0, 2: 1, 3: 2, 0: 3})):
     for cod, t, cal, v, n in con.sql(f"select cod, t, calor, {col}, sum(n) from d group by all").fetchall():
         if v in mapa:
             P[clave][IC[cod], IT[t], int(cal), mapa[v]] = n
+for col, clave, mapa in (("e", "edad", {0: 0, 1: 1, 2: 2}), ("causa", "causa", {c: i for i, c in enumerate(CAUSAS[:-1])})):
+    for cod, t, cal, sx, v, n in con.sql(f"select cod, t, calor, sexo, {col}, sum(n) from d where sexo in ('H','M') group by all").fetchall():
+        if v in mapa:
+            P[f"{clave}_{sx}"][IC[cod], IT[t], int(cal), mapa[v]] = n
 clima = {}
 for reg, t, dias, cal, tmax in con.sql("select reg, temporada, count(*), sum(calor::int), max(tmax) from rd group by all").fetchall():
     c = clima.setdefault(reg, {"dias": [0] * nT, "calor": [0] * nT, "tmax": [None] * nT})

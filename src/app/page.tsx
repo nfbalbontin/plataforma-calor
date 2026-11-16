@@ -6,6 +6,24 @@ import { fechaLarga } from "@/lib/tiempo";
 
 export const dynamic = "force-dynamic";
 
+/** Recorrido del inicio: pantallazos reales (pipeline/capturas_inicio.mjs) con enlace a esa vista. */
+const GUIA: [grupo: string, pasos: [img: string, href: string, titulo: string, texto: string][]][] = [
+  ["Análisis histórico", [
+    ["historia-chile", "/historia", "Elige qué mirar", "Arriba eliges el indicador (muertes totales, por tipo de diagnóstico, urgencias u hospitalizaciones), los veranos, la edad y el sexo. Todo lo de abajo cambia con eso."],
+    ["historia-serie", "/historia/region/13", "Verano a verano", "Las barras son los días de calor extremo y la línea, las muertes atribuibles al calor. Un clic en un verano muestra cada día: temperatura arriba, muertes abajo."],
+    ["historia-donde", "/historia/region/13", "Dónde pasa", "Mapa y ranking de las comunas de una región. Un clic en una comuna entra a ella, y desde ahí a su hospital."],
+    ["historia-quienes", "/historia", "A quién afecta", "Compara a quienes mueren en días de calor extremo con quienes mueren en días normales: por edad, sexo, lugar y causa, y cruzando sexo con edad o con causa."],
+    ["historia-hospital", "/historia/hospital/109100", "Hasta el hospital", "Cada hospital muestra sus urgencias y hospitalizaciones, y las muertes de los residentes de su área."],
+  ]],
+  ["Riesgo futuro", [
+    ["riesgo-chile", "/riesgo", "El mapa de los próximos días", "Cada región se pinta según las muertes potenciales con el pronóstico de temperatura. Abajo eliges el día; del octavo en adelante es orientativo."],
+    ["riesgo-region", "/riesgo?region=05&dia=12", "Dentro de una región", "Las comunas o provincias se comparan entre sí, y la tabla las ordena. Se puede buscar y ordenar por cualquier columna."],
+    ["riesgo-manzanas", "/riesgo?comuna=13110&dia=12", "Hasta la manzana", "En una comuna, cada punto es una manzana: se pinta según su población vulnerable y el calor esperado. A la derecha, la ficha con su hospital de referencia."],
+    ["riesgo-simular", "/riesgo?simular=34", "Simular una temperatura", "Fija una máxima para todo Chile y mira qué zonas se vuelven más graves y cuántas muertes podrían ocurrir."],
+    ["riesgo-aura", "/riesgo?comuna=13110&dia=12&aura=1", "Calor urbano (AURA)", "En la Región Metropolitana, AURA estima qué manzanas son más calurosas que su comuna. Al activarlo se ve dónde ese calor extra concentra el riesgo."],
+  ]],
+];
+
 /** Serie mínima: muertes atribuibles por verano, con su rango. */
 function Serie({ T, an, lo, hi }: { T: number[]; an: number[]; lo: number[]; hi: number[] }) {
   const W = 1000, H = 190, B = 22, n = T.length, max = Math.max(...hi) * 1.05;
@@ -48,11 +66,11 @@ export default async function Inicio() {
       </section>
       <section className="entradas">
         <a className="entrada" href="/historia" data-tour="entrada-historia">
-          <div className="modulo-nombre">Historia</div>
+          <div className="modulo-nombre">Análisis histórico</div>
           <h2>¿Han aumentado las muertes y hospitalizaciones por calor, y dónde?</h2>
           <div className="dato">{pais ? fmt(pais.clima.calor.slice(-10).reduce((a, b) => a + b, 0) / 10, 1) : "–"} <small>días de calor extremo por verano en la última década</small></div>
           <div className="dato-pie">De Chile a la región, la comuna y el hospital.</div>
-          <span className="flecha">Ver la historia →</span>
+          <span className="flecha">Ver el análisis histórico →</span>
         </a>
         <a className="entrada" href="/riesgo" data-tour="entrada-riesgo">
           <div className="modulo-nombre">Riesgo futuro</div>
@@ -63,7 +81,27 @@ export default async function Inicio() {
           <span className="flecha">Ver el mapa →</span>
         </a>
       </section>
-      <p className="sub" style={{ maxWidth: 1080, margin: "-48px auto 60px", padding: "0 24px" }}>Datos históricos hasta el {indice ? fechaLarga(indice.defunciones_hasta) : "sin dato"}. <a href="/metodologia">Metodología y datos</a>.</p>
+      <section className="guia">
+        <h2 className="guia-titulo">Cómo se usa</h2>
+        <p className="guia-sub">Cada imagen es una pantalla real. Un clic la abre en esa misma vista.</p>
+        {GUIA.map(([grupo, pasos]) => <div key={grupo} className="guia-grupo">
+          <h3>{grupo}</h3>
+          {pasos.map(([img, href, titulo, texto], i) => (
+            <article key={img} className="guia-paso">
+              <a href={href} className="guia-img" aria-label={`Abrir: ${titulo}`}>
+                <img className="solo-oscuro" src={`/inicio/${img}-oscuro.jpg`} alt={titulo} width={1200} height={750} loading="lazy" />
+                <img className="solo-claro" src={`/inicio/${img}-claro.jpg`} alt={titulo} width={1200} height={750} loading="lazy" />
+              </a>
+              <div className="guia-texto">
+                <span className="guia-num">{i + 1}</span>
+                <h4>{titulo}</h4>
+                <p>{texto}</p>
+                <a href={href}>Abrir esta vista →</a>
+              </div>
+            </article>))}
+        </div>)}
+      </section>
+      <p className="sub" style={{ maxWidth: 1080, margin: "0 auto 60px", padding: "0 24px" }}>Datos históricos hasta el {indice ? fechaLarga(indice.defunciones_hasta) : "sin dato"}. <a href="/metodologia">Metodología y datos</a>.</p>
     </>
   );
 }

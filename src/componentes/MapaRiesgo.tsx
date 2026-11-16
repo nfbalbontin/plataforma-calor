@@ -8,6 +8,7 @@ import { fmt, temporadaTexto, type Lugar } from "@/lib/historia";
 import { simularRiesgo, type Insumos, type Riesgo, type SerieRiesgo } from "@/lib/calculo";
 import { nivelDe, riesgoDia, textoRango, type Rango } from "@/lib/riesgo";
 import { cortes } from "./MapaValores";
+import { Tabla } from "./Tabla";
 
 type ComunaL = { cod: string; nombre: string; reg: string; bbox: [number, number, number, number] | null; punto: [number, number] | null; pob: number; p65: number; p85: number; ninos: number; disc: number; hacinadas: number; viviendas: number; vulnProm: number; hospital: { cod: string; nombre: string; km: number } | null };
 type RegionL = { cod: string; nombre: string; bbox: [number, number, number, number] | null };
@@ -31,7 +32,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
   riesgo: Riesgo; insumos: Insumos; comunas: ComunaL[]; regiones: RegionL[]; provincias: Provincia[]; tendencia: Record<string, Tend[]>; tendenciaCorrida: string | null; cfg: ConfigRiesgo; aura: { comunas: string[] } | null;
 }) {
   const caja = useRef<HTMLDivElement>(null), mapa = useRef<Mapa | null>(null);
-  const [listo, setListo] = useState(false), [tema, setTema] = useState(0);
+  const [listo, setListo] = useState(false), [tema, setTema] = useState(0), [tamano, setTamano] = useState(0);
   const [d, setD] = useState(0), [reg, setReg] = useState<string | null>(null), [com, setCom] = useState<string | null>(null);
   const [mz, setMz] = useState<Manzana | null>(null), [conAura, setConAura] = useState(false), [zoom, setZoom] = useState(0);
   const [tip, setTip] = useState<{ x: number; y: number; t: string } | null>(null), [hist, setHist] = useState<Lugar | null>(null);
@@ -119,8 +120,11 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
     });
     m.on("mouseout", () => setTip(null));
     mapa.current = m;
+    // Si cambia el tamaño del contenedor (celular, giro de pantalla), el mapa se ajusta y vuelve a encuadrar
+    const ro = new ResizeObserver(() => { m.resize(); setTamano((x) => x + 1); });
+    ro.observe(caja.current);
     const t = () => setTema((x) => x + 1); window.addEventListener("calor:tema", t);
-    return () => { window.removeEventListener("calor:tema", t); m.remove(); mapa.current = null; maplibregl.removeProtocol("pmtiles"); };
+    return () => { ro.disconnect(); window.removeEventListener("calor:tema", t); m.remove(); mapa.current = null; maplibregl.removeProtocol("pmtiles"); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -148,7 +152,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
     const b = c1?.bbox ?? r1?.bbox;
     if (!b) { m.fitBounds(CHILE, { padding: 30, bearing: caja.current!.clientWidth > caja.current!.clientHeight * 1.15 ? 90 : 0, duration: 500 }); return; }
     m.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, bearing: 0, duration: 500 });
-  }, [c1, r1, listo]);
+  }, [c1, r1, listo, tamano]);
 
   // Exceso de riesgo de una manzana: el de su comuna o, con AURA, el de la temperatura de la comuna más su diferencia
   const curvaRM = insumos.curvas["13"]?.M ?? null;
@@ -262,7 +266,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
             <button aria-pressed={unidad === "comuna"} onClick={() => setUnidad("comuna")}>Comunas</button>
             <button aria-pressed={unidad === "provincia"} onClick={() => setUnidad("provincia")}>Provincias</button>
           </div>}
-          {enRM && <div className="segmento" role="group" aria-label="Capa de calor urbano AURA">
+          {enRM && <div className="segmento" role="group" aria-label="Capa de calor urbano AURA" data-tour="mapa-aura" title="AURA estima la temperatura de verano de cada manzana de la Región Metropolitana">
             <button aria-pressed={!conAura} onClick={() => setConAura(false)}>Sin AURA</button><button aria-pressed={conAura} onClick={() => { setConAura(true); if (reg !== "13") { setReg("13"); setCom(null); setMz(null); } }}>Con calor urbano (AURA)</button>
           </div>}
         </div>
@@ -328,22 +332,30 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
           </dl>
         </div>}
 
-        {efectoAura && <div className="seccion">
-          <h3>Efecto del calor urbano (AURA) en {c1!.nombre}</h3>
-          <table className="tabla-mini" style={{ marginTop: 6 }}>
-            <thead><tr><th>Nivel de la manzana</th><th className="n">Sin AURA</th><th className="n">Con AURA</th></tr></thead>
+        {efectoAura && <div className="seccion" data-tour="aura-efecto">
+          <h3>Calor urbano en {c1!.nombre} (AURA)</h3>
+          <p className="chico" style={{ marginTop: 4 }}><b>Qué es AURA:</b> un modelo de la Universidad de Chile que estima la temperatura de verano de cada manzana de la Región Metropolitana. Dentro de una misma comuna hay manzanas más calurosas (más cemento, menos árboles) y más frescas.</p>
+          <dl className="dl" style={{ marginTop: 10 }}>
+            <dt>Las manzanas más frescas de la comuna</dt><dd>{fmt(efectoAura.p10, 1)} °C</dd>
+            <dt>Las manzanas más calurosas de la comuna</dt><dd>+{fmt(efectoAura.p90, 1)} °C</dd>
+          </dl>
+          <p className="chico" style={{ marginTop: 4 }}>Respecto del promedio de la comuna en un día de verano (el 10 % más fresco y el 10 % más caluroso).</p>
+          <table className="tabla-mini" style={{ marginTop: 10 }}>
+            <thead><tr><th>Manzanas por nivel</th><th className="n">Sin AURA</th><th className="n">Con AURA</th></tr></thead>
             <tbody>{cfg.niveles.map((n, i) => <tr key={n}><td><span className={`riesgo r${i}`}>{n}</span></td><td className="n">{fmt(efectoAura.sin[i])}</td><td className="n">{fmt(efectoAura.con[i])}</td></tr>)}</tbody>
           </table>
           <dl className="dl" style={{ marginTop: 8 }}>
-            <dt>Manzanas que suben de nivel</dt><dd>{fmt(efectoAura.suben)}</dd>
-            <dt>Manzanas que bajan de nivel</dt><dd>{fmt(efectoAura.bajan)}</dd>
-            <dt>Personas mayores en las que suben</dt><dd>{fmt(efectoAura.mayoresSuben)}</dd>
-            <dt>Diferencia de temperatura (10 % a 90 % de las manzanas)</dt><dd>{fmt(efectoAura.p10, 1)} a +{fmt(efectoAura.p90, 1)} °C</dd>
-            <dt>Manzanas con dato AURA</dt><dd>{fmt(efectoAura.conDato)} de {fmt(efectoAura.total)}</dd>
+            <dt>Manzanas con más riesgo por ser más calurosas</dt><dd>{fmt(efectoAura.suben)}</dd>
+            <dt>Personas mayores que viven en ellas</dt><dd>{fmt(efectoAura.mayoresSuben)}</dd>
+            <dt>Manzanas con menos riesgo por ser más frescas</dt><dd>{fmt(efectoAura.bajan)}</dd>
           </dl>
-          <p className="chico" style={{ marginTop: 6 }}>AURA suma o resta a cada manzana su diferencia de temperatura de verano respecto del promedio de la comuna. {conAura ? "El mapa la está mostrando." : "Actívala arriba para verla en el mapa."} Fuente: AURA (2026), Universidad de Chile, FONDEF IT23I0095.</p>
+          <details className="glosario" style={{ marginTop: 8 }}><summary>Cómo leer esto</summary>
+            <p style={{ marginTop: 6 }}>Sin AURA, todas las manzanas de la comuna tienen la misma temperatura, y su nivel depende solo de cuánta gente vulnerable vive en ellas (personas mayores, niños pequeños, personas con discapacidad).</p>
+            <p style={{ marginTop: 6 }}>Con AURA, a cada manzana se le suma o resta su diferencia de temperatura. Una manzana «sube de nivel» cuando, por ser más calurosa que su comuna, pasa por ejemplo de moderado a alto; «baja» cuando es más fresca. Así se ven los puntos donde el calor urbano concentra el riesgo.</p>
+            <p style={{ marginTop: 6 }}>{fmt(efectoAura.conDato)} de {fmt(efectoAura.total)} manzanas tienen dato. Fuente: AURA (2026), Universidad de Chile, FONDEF IT23I0095.</p>
+          </details>
         </div>}
-        {enRM && reg === "13" && !c1 && <p className="chico" style={{ marginTop: 10 }}>Capa AURA: elige una comuna para ver cuántas manzanas cambian de nivel con el calor urbano. El total de cada comuna casi no cambia, porque AURA mide diferencias respecto del promedio comunal.</p>}
+        {enRM && reg === "13" && !c1 && <p className="chico" style={{ marginTop: 10 }}><b>Calor urbano (AURA):</b> estima qué manzanas de Santiago son más calurosas o más frescas que el promedio de su comuna. Elige una comuna para ver dónde concentra el riesgo.</p>}
 
         {c1 && <div className="seccion">
           <h3>Ficha de {c1.nombre}</h3>
@@ -360,18 +372,19 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
 
         {!c1 && <div className="seccion" data-tour="lugares">
           <h3>{unidadTxt}, {sim ? `con ${fmt(tsim, 1)} °C` : f.largo}</h3>
-          <table className="tabla-mini" style={{ marginTop: 6 }}>
-            <thead><tr><th>{!reg ? "Región" : unidad === "provincia" ? "Provincia" : "Comuna"}</th><th>Riesgo</th><th className="n">Muertes potenciales{sufijo} (rango)</th></tr></thead>
-            <tbody>{[...unidades].sort((a, b) => (pintar === "nivel" ? b.nivel - a.nivel || b.r[0] - a.r[0] : b.r[0] - a.r[0])).map((u) => <tr key={u.cod}>
-              <td>{unidad === "comuna" || !reg ? <button className="enlace-btn" onClick={() => { if (reg) setCom(u.cod); else setReg(u.cod); setMz(null); }}>{u.nombre}</button> : u.nombre}</td>
-              <td><span className={`riesgo r${u.nivel}`}>{cfg.niveles[u.nivel]}</span></td>
-              <td className="n">{textoRango(u.r)}</td></tr>)}</tbody>
-          </table>
+          <div style={{ marginTop: 6 }}><Tabla mini filas={unidades} clave={(u) => u.cod} buscar={(u) => u.nombre} placeholder={`Buscar ${!reg ? "región" : unidad}…`}
+            orden={{ col: pintar === "nivel" ? 1 : 2, asc: false }}
+            columnas={[
+              { titulo: !reg ? "Región" : unidad === "provincia" ? "Provincia" : "Comuna", valor: (u) => u.nombre,
+                celda: (u) => unidad === "comuna" || !reg ? <button className="enlace-btn" onClick={() => { if (reg) setCom(u.cod); else setReg(u.cod); setMz(null); }}>{u.nombre}</button> : u.nombre },
+              { titulo: "Riesgo", valor: (u) => u.nivel * 1e6 + u.r[0], celda: (u) => <span className={`riesgo r${u.nivel}`}>{cfg.niveles[u.nivel]}</span> },
+              { titulo: `Muertes potenciales${sufijo}`, n: true, valor: (u) => u.r[0], celda: (u) => textoRango(u.r) },
+            ]} /></div>
           {reg && <p className="chico" style={{ marginTop: 6 }}>Mientras una comuna no tenga serie de temperatura propia comparte el nivel de la capital regional; lo que la distingue es su población y cuánto muere habitualmente.</p>}
         </div>}
 
         {(c1 || r1) && <div className="seccion">
-          <h3>Historia de {c1?.nombre ?? r1?.nombre}</h3>
+          <h3>Análisis histórico de {c1?.nombre ?? r1?.nombre}</h3>
           <p className="chico">Muertes atribuibles al calor{sufijo} en {c1 ? "la comuna" : "la región"}.</p>
           {!hist ? <p className="tenue">Cargando…</p> : !hs ? <p className="tenue">Sin datos.</p> : <>
             {veranos.some((i) => (hs[0][i] ?? 0) >= 50) ? <table className="tabla-mini" style={{ marginTop: 6 }}>
@@ -384,7 +397,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
               <tbody>{olas.map((e) => <tr key={e.ini}><td>{e.ini.slice(8)}/{e.ini.slice(5, 7)}/{e.ini.slice(0, 4)} · {e.dias} días</td><td className="n">{fmt(e.tmax, 1)} °C</td>
                 <td className="n">{textoRango(por([e.an, e.lo, e.hi], kh(hist.temporadas.indexOf(e.t))))}</td></tr>)}</tbody>
             </table>}
-            <p style={{ marginTop: 10 }}><a className="boton sec" href={c1 ? `/historia/comuna/${c1.cod}` : `/historia/region/${r1!.cod}`}>Ver la historia completa de {c1?.nombre ?? r1?.nombre}</a></p>
+            <p style={{ marginTop: 10 }}><a className="boton sec" href={c1 ? `/historia/comuna/${c1.cod}` : `/historia/region/${r1!.cod}`}>Ver el análisis histórico de {c1?.nombre ?? r1?.nombre}</a></p>
           </>}
         </div>}
 

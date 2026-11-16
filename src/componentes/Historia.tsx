@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarrasRango, CurvaRiesgo, DetalleDiario, PerfilBarras, SerieVeranos } from "./Graficos";
 import { MapaValores } from "./MapaValores";
+import { Tabla } from "./Tabla";
 import {
-  POR, EDADES, INDICADORES, SEXOS, claveCurva, claveSerie, edadesDe, esMuerte, fmt, grupos, rangoTexto, resumen, rutaDe, temporadaTexto, tendenciaDecada,
+  DEFINICIONES, GLOSARIO, POR, EDADES, INDICADORES, SEXOS, claveCurva, claveSerie, edadesDe, esMuerte, fmt, grupos, rangoTexto, resumen, rutaDe, temporadaTexto, tendenciaDecada,
   type CurvasRegion, type Lugar,
 } from "@/lib/historia";
 
@@ -29,8 +30,9 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
   const [hijos, setHijos] = useState<Record<string, Lugar>>({});
   const [ind, setInd] = useState("M"), [edad, setEdad] = useState("T"), [sexo, setSexo] = useState("A");
   const [desde, setDesde] = useState(0), [fin, setFin] = useState(0);
+  const [cruce, setCruce] = useState<"no" | "edad" | "causa">("no");
   const [medida, setMedida] = useState<"tasa" | "numero">("numero"), [sel, setSel] = useState<number | null>(null);
-  const [dia, setDia] = useState<{ d: Diario; c: ClimaDia } | null>(null), [todas, setTodas] = useState(false);
+  const [dia, setDia] = useState<{ d: Diario; c: ClimaDia } | null>(null);
 
   useEffect(() => {
     let vivo = true;
@@ -114,6 +116,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
   const diasCalor = l.clima.calor.slice(desde, fin + 1).reduce((a, b) => a + b, 0), diasTot = l.clima.dias.slice(desde, fin + 1).reduce((a, b) => a + b, 0);
   const mCalor = perfil?.edad.calor.reduce((a, b) => a + b, 0) ?? 0, mNormal = perfil?.edad.normal.reduce((a, b) => a + b, 0) ?? 0;
   const eps = l.episodios.filter((e) => e.t >= T[desde] && e.t <= T[fin] && e.obs >= 20).sort((a, b) => (l.tipo === "pais" ? b.an - a.an : b.ini.localeCompare(a.ini)));
+  const kOla = (e: { reg: string; t: number }) => { if (medida !== "tasa") return 1; const pob = (l.tipo === "pais" ? hijos[e.reg] : l)?.pobT?.[T.indexOf(e.t)]; return pob ? POR / pob : NaN; };
   const nombres = Object.fromEntries(l.hijos.map((h) => [h.cod, h.nombre]));
   const conMapa = l.tipo !== "comuna" && l.hijos.length > 0;
 
@@ -140,6 +143,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
         <div className="filtro-medida"><label>Mostrar</label><div className="segmento" role="group" aria-label="Medida"><button aria-pressed={medida === "numero"} onClick={() => setMedida("numero")}>Número</button><button aria-pressed={medida === "tasa"} onClick={() => setMedida("tasa")}>Por 1.000 habitantes</button></div></div>
         <div><label htmlFor="f-sexo">Sexo</label><select id="f-sexo" value={sexoOk} disabled={!esMuerte(ind)} onChange={(e) => setSexo(e.target.value)}>{Object.entries(SEXOS).map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select></div>
       </div>
+      <details className="glosario"><summary>Qué significa cada término</summary><dl>{GLOSARIO.map(([t, d]) => <div key={t}><dt>{t}</dt><dd>{d}</dd></div>)}</dl></details>
       {!esMuerte(ind) && <p className="chico" style={{ marginTop: 6 }}>Urgencias no trae sexo ni diagnóstico: solo grupos amplios de causa y dos grupos de edad. Datos desde el verano 2010-11.</p>}
 
       {/* 1. Tres cifras */}
@@ -167,7 +171,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       {/* 2. Temperatura y casos en el tiempo */}
       <section className="seccion" data-tour="serie">
         <div className="titulo-fila">
-          <h2>Días de calor extremo y {sust} atribuibles, por verano</h2>
+          <h2>Días de calor extremo y {sust} atribuibles por verano, {per}</h2>
         </div>
         {calc?.gs && r?.suficiente ? <div className="tarjeta" style={{ marginTop: 10 }}>
           <SerieVeranos etiquetas={calc.puntos.map((p) => p.g.etiqueta)} barras={calc.puntos.map((p) => p.calor)} linea={calc.puntos.map((p) => p.v)} lo={calc.puntos.map((p) => p.lo)} hi={calc.puntos.map((p) => p.hi)}
@@ -201,7 +205,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
 
       {/* 4. Dónde */}
       {l.hijos.length > 0 && <section className="seccion" data-tour="donde">
-        <h2>{l.tipo === "comuna" ? "Hospitales de la comuna" : `Dónde se concentra, por ${NIVEL_INFERIOR[l.tipo]}`}</h2>
+        <h2>{l.tipo === "comuna" ? `Hospitales de la comuna, ${per}` : `Dónde se concentra, por ${NIVEL_INFERIOR[l.tipo]}, ${per}`}</h2>
         <p className="sub">{ranking[0]?.tasa ? `${sust[0].toUpperCase() + sust.slice(1)} atribuibles por 1.000 habitantes en todo el período` : `${sust[0].toUpperCase() + sust.slice(1)} atribuibles en todo el período`}, {per}. Un clic baja de nivel.</p>
         <div className={conMapa ? "grilla dos-mapa" : ""} style={{ marginTop: 10 }}>
           {conMapa && <MapaValores modo={l.tipo === "pais" ? "region" : "comuna"} valores={Object.fromEntries(ranking.map((x) => [x.h.cod, x.ok ? x.valor : null]))} nombres={nombres} bbox={l.bbox}
@@ -217,33 +221,43 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
 
       {/* 5. Quiénes */}
       {perfil && <section className="seccion" data-tour="quienes">
-        <h2>Quiénes mueren en días de calor extremo y en días normales</h2>
+        <div className="titulo-fila">
+          <h2>Quiénes mueren en días de calor extremo y en días normales, {per}</h2>
+          <div className="segmento" role="group" aria-label="Cruzar">
+            <button aria-pressed={cruce === "no"} onClick={() => setCruce("no")}>Todo</button>
+            <button aria-pressed={cruce === "edad"} onClick={() => setCruce("edad")}>Sexo y edad</button>
+            <button aria-pressed={cruce === "causa"} onClick={() => setCruce("causa")}>Sexo y causa</button>
+          </div>
+        </div>
         <p className="sub">Todas las muertes de la temporada cálida, {per}: {fmt(mCalor)} en {fmt(diasCalor, 0)} días de calor extremo ({fmt(diasCalor ? mCalor / diasCalor : null, 1)} por día) y {fmt(mNormal)} en días normales ({fmt(diasTot - diasCalor ? mNormal / (diasTot - diasCalor) : null, 1)} por día).</p>
         {mCalor < 50 ? <p className="aviso" style={{ marginTop: 10 }}>Datos insuficientes: menos de 50 muertes en días de calor extremo.</p> : <>
           <div className="leyenda-graf" style={{ marginTop: 10 }}><span><i className="cuadro" style={{ background: "var(--n2)" }} />% en días de calor extremo</span><span><i className="cuadro" style={{ background: "var(--barra)" }} />% en días normales</span><span>La última columna es la diferencia en puntos porcentuales.</span></div>
-          <div className="grilla g2">
-            {([["edad", "Edad"], ["sexo", "Sexo"], ["lugar", "Lugar de defunción"], ["nivel", "Nivel de diagnóstico (desde 1997)"], ["causa", "Causa de muerte (desde 1997)"]] as const).map(([k, t]) =>
-              <div key={k} className="tarjeta"><h3>{t}</h3><PerfilBarras {...perfil[k]} /></div>)}
-          </div></>}
+          {cruce === "no" ? <div className="grilla g2">
+            {([["edad", "Edad"], ["sexo", "Sexo"], ["lugar", "Lugar de defunción"], ["nivel", "Nivel de diagnóstico"], ["causa", "Causa de muerte"]] as const).map(([k, t]) =>
+              <div key={k} className="tarjeta"><h3>{t}{(k === "nivel" || k === "causa") && T[desde] < 1997 ? " (desde 1997)" : ""}</h3>{DEFINICIONES[k] && <p className="chico">Un clic en cada fila muestra qué incluye.</p>}<PerfilBarras {...perfil[k]} def={DEFINICIONES[k]} /></div>)}
+          </div> : perfil[`${cruce}_H`] ? <>
+            <p className="chico" style={{ marginBottom: 8 }}>Cada columna reparte las muertes de un sexo por {cruce === "edad" ? "edad" : "causa"}: así se ve si el calor cambia el perfil de hombres y mujeres por separado.</p>
+            <div className="grilla g2">
+              {(["M", "H"] as const).map((sx) => <div key={sx} className="tarjeta"><h3>{sx === "M" ? "Mujeres" : "Hombres"}: {cruce === "edad" ? "edad" : "causa de muerte"}</h3><PerfilBarras {...perfil[`${cruce}_${sx}`]} def={DEFINICIONES[cruce]} /></div>)}
+            </div></> : <p className="tenue">Sin datos del cruce.</p>}</>}
       </section>}
 
       {/* 6. Episodios */}
       {l.perfil && <section className="seccion" data-tour="olas">
-        <h2>Olas de calor{l.tipo === "pais" ? " con más muertes atribuibles" : ""}</h2>
+        <h2>Olas de calor{l.tipo === "pais" ? " con más muertes atribuibles" : ""}, {per}</h2>
         <p className="sub">Tres o más días seguidos con máxima sobre el percentil 90 local. Se cuentan las muertes atribuibles al calor durante la ola y los 3 días siguientes.</p>
-        {eps.length === 0 ? <p className="tenue" style={{ marginTop: 10 }}>Sin olas de calor en el período.</p> : <div className="tabla-caja" style={{ marginTop: 10 }}>
-          <table>
-            <thead><tr>{l.tipo === "pais" && <th>Región</th>}<th>Inicio</th><th>Término</th><th className="n">Días</th><th className="n">Máxima</th><th className="n">Muertes atribuibles al calor{medida === "tasa" ? " por 1.000 habitantes" : ""} (rango)</th></tr></thead>
-            <tbody>{(todas ? eps : eps.slice(0, 10)).map((e) => <tr key={e.reg + e.ini}>
-              {l.tipo === "pais" && <td><a href={`/historia/region/${e.reg}`}>{nombres[e.reg]}</a></td>}
-              <td>{FECHA(e.ini)}</td><td>{FECHA(e.fin)}</td><td className="n">{e.dias}</td><td className="n">{fmt(e.tmax, 1)} °C</td>
-              <td className="n">{(() => {
-                const pob = (l.tipo === "pais" ? hijos[e.reg] : l)?.pobT?.[T.indexOf(e.t)], k = medida === "tasa" ? (pob ? POR / pob : null) : 1, dd = medida === "tasa" ? 4 : 1;
-                return k == null ? "sin dato" : `${fmt(Math.max(0, e.an * k), dd)} (${fmt(Math.max(0, e.lo * k), dd)} – ${fmt(Math.max(0, e.hi * k), dd)})`;
-              })()}</td></tr>)}</tbody>
-          </table>
+        {eps.length === 0 ? <p className="tenue" style={{ marginTop: 10 }}>Sin olas de calor en el período.</p> : <div style={{ marginTop: 10 }}>
+          <Tabla filas={eps} clave={(e) => e.reg + e.ini} limite={10} orden={{ col: l.tipo === "pais" ? 5 : 4, asc: false }}
+            buscar={(e) => `${nombres[e.reg] ?? ""} ${FECHA(e.ini)} ${e.ini.slice(0, 4)}`} placeholder={l.tipo === "pais" ? "Buscar región o año…" : "Buscar año…"}
+            columnas={[
+              ...(l.tipo === "pais" ? [{ titulo: "Región", celda: (e: (typeof eps)[number]) => <a href={`/historia/region/${e.reg}`}>{nombres[e.reg]}</a>, valor: (e: (typeof eps)[number]) => nombres[e.reg] ?? "" }] : []),
+              { titulo: "Inicio", celda: (e) => FECHA(e.ini), valor: (e) => e.ini },
+              { titulo: "Días", celda: (e) => e.dias, valor: (e) => e.dias, n: true },
+              { titulo: "Máxima", celda: (e) => `${fmt(e.tmax, 1)} °C`, valor: (e) => e.tmax, n: true },
+              { titulo: `Atribuibles al calor${medida === "tasa" ? " por 1.000 hab." : ""} (rango)`, n: true,
+                valor: (e) => e.an * kOla(e), celda: (e) => { const k = kOla(e), dd = medida === "tasa" ? 4 : 1; return Number.isNaN(k) ? "sin dato" : `${fmt(Math.max(0, e.an * k), dd)} (${fmt(Math.max(0, e.lo * k), dd)} – ${fmt(Math.max(0, e.hi * k), dd)})`; } },
+            ]} />
         </div>}
-        {eps.length > 10 && <p style={{ marginTop: 8 }}><button className="enlace-btn" onClick={() => setTodas(!todas)}>{todas ? "Ver solo 10" : `Ver las ${eps.length}`}</button></p>}
       </section>}
     </div>
   );

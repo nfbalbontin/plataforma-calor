@@ -57,7 +57,7 @@ export default function Metodologia() {
         <h2>Modelo estadístico</h2>
         <p>Un solo modelo convierte grados de temperatura en muertes y hospitalizaciones. Compara, dentro de cada verano, los días más calurosos con los días templados del mismo lugar, y mide cuánto suben los casos.</p>
         <div className="formula">Muertes potenciales = Σ<sub>d</sub> B<sub>d</sub> · (RR(T<sub>d</sub>) − 1)</div>
-        <p>B son las muertes habituales del lugar en un día de esa época; RR es el riesgo relativo que la curva asigna a la temperatura T. Con la temperatura observada entrega las muertes atribuibles de Historia; con la pronosticada, las muertes potenciales del mapa de riesgo.</p>
+        <p>B son las muertes habituales del lugar en un día de esa época; RR es el riesgo relativo que la curva asigna a la temperatura T. Con la temperatura observada entrega las muertes atribuibles del análisis histórico; con la pronosticada, las muertes potenciales del mapa de riesgo.</p>
         <div className="tabla-caja" style={{ marginTop: 10 }}><table><tbody>
           <tr><td><b>Qué se explica</b></td><td>Conteos diarios por región: muertes por todas las causas y por grupo de edad, muertes por nivel de diagnóstico, atenciones de urgencia y hospitalizaciones desde urgencia.</td></tr>
           <tr><td><b>Con qué</b></td><td>Promedio de la temperatura máxima del día y de los 3 días anteriores, en la capital regional.</td></tr>

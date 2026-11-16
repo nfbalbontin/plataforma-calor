@@ -145,20 +145,22 @@ export function BarrasRango({ filas, dec = 0, alElegir }: { filas: { cod: string
 }
 
 /** Perfil: porcentaje de cada categoría en días de calor extremo frente a días normales. */
-export function PerfilBarras({ cat, calor, normal }: { cat: string[]; calor: number[]; normal: number[] }) {
+export function PerfilBarras({ cat, calor, normal, def }: { cat: string[]; calor: number[]; normal: number[]; def?: Record<string, string> }) {
   const tc = calor.reduce((a, b) => a + b, 0), tn = normal.reduce((a, b) => a + b, 0);
   const filas = cat.map((c, i) => ({ c, a: tc ? (calor[i] / tc) * 100 : 0, b: tn ? (normal[i] / tn) * 100 : 0 })).filter((x) => x.a + x.b > 0);
   const max = Math.max(1, ...filas.map((x) => Math.max(x.a, x.b)));
   return (
     <div className="perfil">
-      {filas.map((x) => (
-        <div key={x.c} className="perfil-fila" title={`${x.c}: ${f(x.a, 1)} % en días de calor extremo, ${f(x.b, 1)} % en días normales`}>
-          <span>{x.c}</span>
-          <div><i className="calor" style={{ width: `${(x.a / max) * 100}%` }} /><i className="normal" style={{ width: `${(x.b / max) * 100}%` }} /></div>
-          <span className="tab"><b>{f(x.a, 1)} %</b><br /><small>{f(x.b, 1)} %</small></span>
-          <span className={`dif tab ${x.a - x.b > 0.5 ? "sube" : ""}`}>{Math.abs(x.a - x.b) < 0.05 ? "" : x.a - x.b > 0 ? "+" : "−"}{f(Math.abs(x.a - x.b), 1)}</span>
-        </div>
-      ))}
+      {filas.map((x) => {
+        const fila = (
+          <div className="perfil-fila" title={`${x.c}: ${f(x.a, 1)} % en días de calor extremo, ${f(x.b, 1)} % en días normales`}>
+            <span>{def?.[x.c] ? <span className="perfil-def">{x.c}</span> : x.c}</span>
+            <div><i className="calor" style={{ width: `${(x.a / max) * 100}%` }} /><i className="normal" style={{ width: `${(x.b / max) * 100}%` }} /></div>
+            <span className="tab"><b>{f(x.a, 1)} %</b><br /><small>{f(x.b, 1)} %</small></span>
+            <span className={`dif tab ${x.a - x.b > 0.5 ? "sube" : ""}`}>{Math.abs(x.a - x.b) < 0.05 ? "" : x.a - x.b > 0 ? "+" : "−"}{f(Math.abs(x.a - x.b), 1)}</span>
+          </div>);
+        return def?.[x.c] ? <details key={x.c} className="perfil-item"><summary>{fila}</summary><p>{def[x.c]}</p></details> : <div key={x.c}>{fila}</div>;
+      })}
     </div>
   );
 }

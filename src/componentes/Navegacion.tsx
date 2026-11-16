@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 
-const SECCIONES: [string, string][] = [["/historia", "Historia"], ["/riesgo", "Riesgo futuro"], ["/metodologia", "Metodología y datos"]];
+const SECCIONES: [string, string][] = [["/historia", "Análisis histórico"], ["/riesgo", "Riesgo futuro"], ["/metodologia", "Metodología y datos"]];
 
 export function Navegacion() {
   const ruta = usePathname();
