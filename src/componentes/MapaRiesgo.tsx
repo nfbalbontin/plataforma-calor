@@ -341,7 +341,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
             <dt>Diferencia de temperatura (10 % a 90 % de las manzanas)</dt><dd>{fmt(efectoAura.p10, 1)} a +{fmt(efectoAura.p90, 1)} °C</dd>
             <dt>Manzanas con dato AURA</dt><dd>{fmt(efectoAura.conDato)} de {fmt(efectoAura.total)}</dd>
           </dl>
-          <p className="chico" style={{ marginTop: 6 }}>AURA suma o resta a cada manzana su diferencia de temperatura de verano respecto del promedio de la comuna. {conAura ? "El mapa la está mostrando." : "Actívala arriba para verla en el mapa."} Solo uso local: no se publica sin autorización de AURA.</p>
+          <p className="chico" style={{ marginTop: 6 }}>AURA suma o resta a cada manzana su diferencia de temperatura de verano respecto del promedio de la comuna. {conAura ? "El mapa la está mostrando." : "Actívala arriba para verla en el mapa."} Fuente: AURA (2026), Universidad de Chile, FONDEF IT23I0095.</p>
         </div>}
         {enRM && reg === "13" && !c1 && <p className="chico" style={{ marginTop: 10 }}>Capa AURA: elige una comuna para ver cuántas manzanas cambian de nivel con el calor urbano. El total de cada comuna casi no cambia, porque AURA mide diferencias respecto del promedio comunal.</p>}
 
