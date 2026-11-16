@@ -8,7 +8,7 @@ export type Episodio = { t: number; ini: string; fin: string; dias: number; tmax
 export type Lugar = {
   tipo: Tipo; cod: string; nombre: string; ruta: Paso[]; temporadas: number[];
   clima: { calor: number[]; tmax: (number | null)[]; dias: number[]; p95: number | null; p90: number | null; punto: string | null; regiones: number };
-  pob65: (number | null)[]; series: Record<string, (number | null)[][]>; perfil: Perfil | null; episodios: Episodio[];
+  pob65: (number | null)[]; pobT: (number | null)[]; series: Record<string, (number | null)[][]>; perfil: Perfil | null; episodios: Episodio[];
   curva: string; hijos: Hijo[]; bbox: [number, number, number, number] | null;
   hospital?: { cod: string; nombre: string; dist_km: number; regla: string }; servicio?: string; complejidad?: string | null; con_urgencias?: boolean;
 };
@@ -48,21 +48,24 @@ export function archivoDe(tipo: string | undefined, cod: string | undefined): st
 }
 
 export const MINIMO_EVENTOS = 50;
+/** Base de las tasas: por cada 1.000 habitantes (población total del INE). */
+export const POR = 1000;
 export type Resumen = { obs: number; an: number; lo: number; hi: number; temporadas: number; suficiente: boolean; tasa: number | null; tasaLo: number | null; tasaHi: number | null };
 
 /** Suma de una serie entre dos temporadas (índices incluidos). El rango suma los extremos de cada temporada. */
 export function resumen(l: Lugar, clave: string, i0: number, i1: number): Resumen | null {
   const s = l.series[clave];
   if (!s) return null;
-  let obs = 0, an = 0, lo = 0, hi = 0, n = 0, anP = 0, loP = 0, hiP = 0, pob = 0, nP = 0;
+  let obs = 0, an = 0, lo = 0, hi = 0, n = 0, ta = 0, tl = 0, th = 0, nP = 0;
   for (let i = i0; i <= i1; i++) {
     if (s[0][i] == null) continue;
     obs += s[0][i]!; an += s[1][i]!; lo += s[2][i]!; hi += s[3][i]!; n++;
-    if (l.pob65[i]) { anP += s[1][i]!; loP += s[2][i]!; hiP += s[3][i]!; pob += l.pob65[i]!; nP++; }
+    const p = l.pobT?.[i];
+    if (p) { ta += (s[1][i]! / p) * POR; tl += (s[2][i]! / p) * POR; th += (s[3][i]! / p) * POR; nP++; }
   }
   if (!n) return null;
-  const k = pob ? 1e5 / pob : 0;          // tasa anual promedio por 100.000 personas de 65 años o más
-  return { obs, an, lo, hi, temporadas: n, suficiente: obs >= MINIMO_EVENTOS, tasa: nP ? anP * k : null, tasaLo: nP ? loP * k : null, tasaHi: nP ? hiP * k : null };
+  // Tasa del período: suma de las tasas de cada verano, por 1.000 habitantes (misma base que el número total)
+  return { obs, an, lo, hi, temporadas: n, suficiente: obs >= MINIMO_EVENTOS, tasa: nP ? ta : null, tasaLo: nP ? tl : null, tasaHi: nP ? th : null };
 }
 
 /** Pendiente por década de una serie anual (mínimos cuadrados). Null con menos de 8 años. */

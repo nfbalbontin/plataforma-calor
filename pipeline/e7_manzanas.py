@@ -26,5 +26,19 @@ n = 0
 for cod, x, y, p, m, ni, d in filas:
     (OUT / f"{cod}.json").write_text(json.dumps({"x": x, "y": y, "p": p, "m": m, "n": ni, "d": d}, separators=(",", ":"), allow_nan=False))
     n += len(x)
+# Capa AURA (solo uso local; public/manzanas_aura está en .gitignore y no se publica sin autorización de AURA):
+# diferencia de temperatura de verano de día de cada manzana respecto del promedio de su comuna, en el mismo orden.
+AURA = TRABAJO / "manzana_aura.parquet"
+if AURA.exists():
+    OUTA = PLATAFORMA / "public" / "manzanas_aura"
+    if OUTA.exists():
+        shutil.rmtree(OUTA)
+    OUTA.mkdir()
+    for cod, dif in con.sql(f"""select m.cod_comuna, list(round(a.dif_temp_dia, 2) order by m.cod_manzana)
+          from '{TRABAJO}/manzana.parquet' m left join '{AURA}' a on a.cod_manzana_14 = m.cod_manzana_14
+          where m.poblacion > 0 and coalesce(m.lon_interior, m.lon) is not null and m.cod_region = '13' group by 1""").fetchall():
+        if any(v is not None for v in dif):
+            (OUTA / f"{cod}.json").write_text(json.dumps({"dif": dif}, separators=(",", ":")))
+    print(f"  public/manzanas_aura: {len(list(OUTA.glob('*.json')))} comunas de la RM (no se publica)")
 tam = sum(f.stat().st_size for f in OUT.glob("*.json")) / 1e6
 print(f"  public/manzanas: {len(filas)} comunas, {n:,} manzanas con población, {tam:.1f} MB")

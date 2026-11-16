@@ -1,5 +1,5 @@
 import { configRiesgo, historiaPais, indiceHistoria } from "@/lib/datos";
-import { fmt, rangoTexto, temporadaTexto } from "@/lib/historia";
+import { fmt, temporadaTexto } from "@/lib/historia";
 import { riesgoActual } from "@/lib/pronostico";
 import { textoRango, type Rango } from "@/lib/riesgo";
 import { fechaLarga } from "@/lib/tiempo";
@@ -22,16 +22,16 @@ export default async function Inicio() {
         <div className="tarjeta modulo">
           <div className="eyebrow">Historia</div>
           <h2>¿Han aumentado las muertes y hospitalizaciones asociadas al calor, y dónde?</h2>
-          {tot && <div className="kpi"><div className="valor">{rangoTexto(tot[2], tot[3])} muertes</div>
-            <div className="chico">atribuibles al calor en Chile, veranos {temporadaTexto(T[0])} a {temporadaTexto(T[T.length - 1])}; estimación central {fmt(tot[1])} de {fmt(tot[0])} muertes en temporada cálida.</div></div>}
+          {tot && <div className="kpi"><div className="rot">Muertes atribuibles al calor en Chile, veranos {temporadaTexto(T[0])} a {temporadaTexto(T[T.length - 1])}</div><div className="valor">{textoRango([tot[1], tot[2], tot[3]], 0)}</div>
+            <div className="chico">de {fmt(tot[0])} muertes en temporada cálida</div></div>}
           <p className="tenue">Temperatura contra muertes, urgencias y hospitalizaciones: Chile, región, comuna y hospital.</p>
           <a className="boton" href="/historia">Ver la historia</a>
         </div>
         <div className="tarjeta modulo">
           <div className="eyebrow">Riesgo futuro</div>
           <h2>¿Dónde puede morir u hospitalizarse más gente con el calor que viene?</h2>
-          {r7 && riesgo ? <div className="kpi"><div className="valor">{textoRango(r7)}</div>
-            <div className="chico">en Chile en los próximos {alta} días; {altas === 0 ? "ninguna región" : altas === 1 ? "1 región" : `${altas} regiones`} con riesgo alto o muy alto. Pronóstico del {fechaLarga(riesgo.emision)}.</div></div>
+          {r7 && riesgo ? <div className="kpi"><div className="rot">Muertes potenciales en Chile, próximos {alta} días</div><div className="valor">{textoRango(r7, 0)}</div>
+            <div className="chico"> {altas === 0 ? "ninguna región" : altas === 1 ? "1 región" : `${altas} regiones`} con riesgo alto o muy alto. Pronóstico del {fechaLarga(riesgo.emision)}.</div></div>
             : <p className="aviso">Sin pronóstico guardado todavía.</p>}
           <p className="tenue">Mapa de riesgo según el pronóstico: región, comuna y manzana, con la ficha de cada lugar.</p>
           <a className="boton" href="/riesgo">Ver el mapa de riesgo</a>

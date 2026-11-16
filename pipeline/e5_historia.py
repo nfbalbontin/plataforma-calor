@@ -220,10 +220,13 @@ clima = {}
 for reg, t, dias, cal, tmax in con.sql("select reg, temporada, count(*), sum(calor::int), max(tmax) from rd group by all").fetchall():
     c = clima.setdefault(reg, {"dias": [0] * nT, "calor": [0] * nT, "tmax": [None] * nT})
     c["dias"][IT[t]], c["calor"][IT[t]], c["tmax"][IT[t]] = int(dias), int(cal), round(tmax, 1)
-POB = np.full((nC, nT), np.nan)
-for cod, ano, pb in con.sql(f"select cod_comuna, ano, pob_65 from '{TRABAJO}/pob_comuna_ano.parquet'").fetchall():
+POB, POBT = np.full((nC, nT), np.nan), np.full((nC, nT), np.nan)
+for cod, ano, pb, pt in con.sql(f"select cod_comuna, ano, pob_65, pob_total from '{TRABAJO}/pob_comuna_ano.parquet'").fetchall():
     if cod in IC and ano in IT:
-        POB[IC[cod], IT[ano]] = pb
+        POB[IC[cod], IT[ano]], POBT[IC[cod], IT[ano]] = pb, pt
+# Población total antes de 2002 (primer año del INE): se usa la de 2002, para que la tasa cubra todo el período.
+primero = int(np.argmax(~np.isnan(POBT[0])))
+POBT[:, :primero] = POBT[:, [primero]]
 
 
 # ------------------------------------------------------------ armado por lugar
@@ -294,7 +297,7 @@ def escribir(nombre, obj, carpeta=OUT):
 def lugar(archivo, tipo, cod, nombre, ruta, ci, ei, regs, hijos, extra=None):
     pob = POB[ci].sum(0) if len(ci) else np.full(nT, np.nan)
     obj = {"tipo": tipo, "cod": cod, "nombre": nombre, "ruta": ruta, "temporadas": T, "clima": clima_de(regs),
-           "pob65": r1(pob, 0), "series": series_de(archivo), "perfil": perfil(ci) if len(ci) else None, "episodios": OLAS_L.get(archivo, []),
+           "pob65": r1(pob, 0), "pobT": r1(POBT[ci].sum(0) if len(ci) else np.full(nT, np.nan), 0), "series": series_de(archivo), "perfil": perfil(ci) if len(ci) else None, "episodios": OLAS_L.get(archivo, []),
            "curva": regs[0] if len(regs) == 1 else "00", "hijos": hijos,
            "bbox": None if tipo == "pais" else caja({COD[i] for i in ci}), **(extra or {})}
     escribir(archivo, obj)

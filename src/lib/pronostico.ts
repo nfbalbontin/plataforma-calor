@@ -5,7 +5,7 @@
  */
 import { baseRiesgo, climaComunas, comunas, configRiesgo, curvaDe, modelo, regiones } from "./datos";
 import { ahoraIso, q, seguro } from "./db";
-import { aEscalaRegion, mesCalido, nivelDe, promedioRezagos, riesgoDia, type Rango } from "./riesgo";
+import { calcularRiesgo, type Insumos, type Riesgo } from "./calculo";
 import { hoyChile, sumarDias } from "./tiempo";
 
 const API = "https://api.open-meteo.com/v1/forecast";
@@ -86,22 +86,30 @@ export async function tareaDiaria(): Promise<ResumenTarea> {
   return res;
 }
 
-/** Serie por día de un lugar: temperatura, aumento de riesgo, nivel y muertes potenciales con su rango. */
-export type SerieRiesgo = { t: (number | null)[]; x?: (number | null)[]; e: number[]; n: number[]; m: number[]; lo: number[]; hi: number[]; h7: Rango; propia?: boolean };
-export type Riesgo = {
-  emision: string; actualizado: string | null; hoy: string; vencido: boolean; fechas: string[];
-  comunas: Record<string, SerieRiesgo>; regiones: Record<string, SerieRiesgo>; pais: SerieRiesgo; sinDato: string[];
-};
+export type { Riesgo, SerieRiesgo } from "./calculo";
 
-const r3 = (v: number) => Math.round(v * 1000) / 1000;
+/** Insumos fijos del cálculo (curvas, muertes habituales, clima propio); también se mandan al navegador para simular. */
+export function insumosRiesgo(): Insumos | null {
+  const mod = modelo();
+  if (!mod) return null;
+  const cfg = configRiesgo(), base = baseRiesgo().comunas, clima = climaComunas().comunas;
+  const curvas: Insumos["curvas"] = {};
+  for (const r of regiones()) {
+    const M = curvaDe(r.cod, "M_T");
+    if (M && mod.regiones[r.cod]) curvas[r.cod] = { M, H: curvaDe(r.cod, "H_T"), qx: mod.regiones[r.cod].cuantiles_x };
+  }
+  return { cortes: cfg.cortes_exceso, diasAlta: cfg.dias_confianza_alta, curvas,
+    base: Object.fromEntries(Object.entries(base).map(([k, v]) => [k, { m: v.m, h: v.h }])),
+    clima: Object.fromEntries(Object.entries(clima).map(([k, v]) => [k, v.q])),
+    comunas: comunas().map((c) => ({ cod: c.cod, reg: c.cod_region })) };
+}
 
 /** Riesgo de los próximos 16 días con el último pronóstico guardado. Devuelve null si nunca se ha cargado uno. */
 export async function riesgoActual(): Promise<Riesgo | null> {
   return seguro(async () => {
     const [ult] = await q<{ f: string | null }>("select max(fecha_emision) f from pronostico");
-    const emision = ult?.f;
-    const mod = modelo();
-    if (!emision || !mod) return null;
+    const emision = ult?.f, ins = insumosRiesgo();
+    if (!emision || !ins) return null;
     const [estado] = await q<{ ultima_carga: string | null }>("select ultima_carga from fuente_estado where fuente='open-meteo'");
     const fechas = Array.from({ length: DIAS }, (_, i) => sumarDias(emision, i));
     const todas = [...Array.from({ length: ATRAS }, (_, i) => sumarDias(emision, i - ATRAS)), ...fechas];
@@ -115,61 +123,6 @@ export async function riesgoActual(): Promise<Riesgo | null> {
     };
     for (const r of await q<{ cod_comuna: string; fecha: string; tmax: number | null }>("select cod_comuna, fecha, tmax from comuna_dia where fecha >= $1 and fecha < $2", [todas[0], emision])) poner(r.cod_comuna, r.fecha, r.tmax);
     for (const r of await q<{ cod_comuna: string; fecha_objetivo: string; tmax: number | null }>("select cod_comuna, fecha_objetivo, tmax from pronostico where fecha_emision = $1", [emision])) poner(r.cod_comuna, r.fecha_objetivo, r.tmax);
-
-    const cfg = configRiesgo(), base = baseRiesgo().comunas, clima = climaComunas().comunas;
-    const vacia = (): SerieRiesgo & { b: number[] } => ({ t: Array(DIAS).fill(null), e: Array(DIAS).fill(0), n: Array(DIAS).fill(0), m: Array(DIAS).fill(0), lo: Array(DIAS).fill(0), hi: Array(DIAS).fill(0), h7: [0, 0, 0], b: Array(DIAS).fill(0) });
-    const out: Riesgo = { emision, actualizado: estado?.ultima_carga ?? null, hoy: hoyChile(), vencido: emision < hoyChile(), fechas, comunas: {}, regiones: {}, pais: vacia(), sinDato: [] };
-    const acum: Record<string, SerieRiesgo & { b: number[] }> = {};
-    const pais = out.pais as SerieRiesgo & { b: number[] };
-    for (const c of comunas()) {
-      const reg = c.cod_region, mr = mod.regiones[reg], curva = curvaDe(reg, "M_T"), curvaH = curvaDe(reg, "H_T");
-      const propia = series.get(c.cod), capital = series.get(`${reg}101`), qc = clima[c.cod]?.q;
-      const usaPropia = !!(propia && qc);
-      const serie = usaPropia ? propia! : capital;
-      if (!mr || !curva || !serie) { out.sinDato.push(c.cod); continue; }
-      const b = base[c.cod] ?? { m: [0, 0, 0, 0, 0], m65: [0, 0, 0, 0, 0], h: [0, 0, 0, 0, 0] };
-      const s: SerieRiesgo = { t: [], x: [], e: [], n: [], m: [], lo: [], hi: [], h7: [0, 0, 0], propia: usaPropia };
-      const a = (acum[reg] ??= vacia());
-      for (let d = 0; d < DIAS; d++) {
-        const i = ATRAS + d;
-        let x = promedioRezagos(serie, i);
-        if (x != null && usaPropia) x = aEscalaRegion(x, qc!, mr.cuantiles_x);
-        const r = riesgoDia(x, curva), mes = mesCalido(fechas[d]), B = b.m[mes];
-        s.t.push((propia ?? serie)[i]); s.x!.push(x == null ? null : Math.round(x * 10) / 10);
-        s.e.push(r3(r.rr - 1)); s.n.push(nivelDe(r.rr - 1, cfg.cortes_exceso));
-        s.m.push(r3(B * (r.rr - 1))); s.lo.push(r3(B * (r.lo - 1))); s.hi.push(r3(B * (r.hi - 1)));
-        a.m[d] += B * (r.rr - 1); a.lo[d] += B * (r.lo - 1); a.hi[d] += B * (r.hi - 1); a.b[d] += B;
-        if (d < cfg.dias_confianza_alta && curvaH) {
-          const rh = riesgoDia(x, curvaH), H = b.h[mes];
-          const h: Rango = [H * (rh.rr - 1), H * (rh.lo - 1), H * (rh.hi - 1)];
-          for (const g of [s, a]) g.h7 = [g.h7[0] + h[0], g.h7[1] + h[1], g.h7[2] + h[2]];
-        }
-      }
-      out.comunas[c.cod] = s;
-    }
-    const cerrar = (g: SerieRiesgo & { b?: number[] }, t: (number | null)[] | undefined) => {
-      for (let d = 0; d < DIAS; d++) {
-        g.e[d] = r3(g.b![d] ? g.m[d] / g.b![d] : 0); g.n[d] = nivelDe(g.e[d], cfg.cortes_exceso);
-        g.m[d] = r3(g.m[d]); g.lo[d] = r3(g.lo[d]); g.hi[d] = r3(g.hi[d]);
-      }
-      g.h7 = g.h7.map(r3) as Rango;
-      if (t) g.t = t.slice(ATRAS);
-      delete g.b;
-    };
-    // Chile: las curvas de cada región son independientes, así que sus errores se combinan en cuadratura y no se suman.
-    const cuad = (vs: Rango[]): Rango => {
-      const m = vs.reduce((a, v) => a + v[0], 0);
-      return [m, m - Math.sqrt(vs.reduce((a, v) => a + (v[0] - v[1]) ** 2, 0)), m + Math.sqrt(vs.reduce((a, v) => a + (v[2] - v[0]) ** 2, 0))];
-    };
-    const regs = Object.values(acum);
-    for (let d = 0; d < DIAS; d++) {
-      [pais.m[d], pais.lo[d], pais.hi[d]] = cuad(regs.map((g) => [g.m[d], g.lo[d], g.hi[d]]));
-      pais.b[d] = regs.reduce((a, g) => a + g.b[d], 0);
-    }
-    pais.h7 = cuad(regs.map((g) => g.h7));
-    for (const r of regiones()) if (acum[r.cod]) { cerrar(acum[r.cod], series.get(`${r.cod}101`)); out.regiones[r.cod] = acum[r.cod]; }
-    for (const s of Object.values(out.comunas)) s.h7 = s.h7.map(r3) as Rango;
-    cerrar(pais, undefined);
-    return out;
+    return calcularRiesgo(ins, series, fechas, ATRAS, { emision, actualizado: estado?.ultima_carga ?? null, hoy: hoyChile(), vencido: emision < hoyChile() });
   }, null);
 }

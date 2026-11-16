@@ -1,6 +1,6 @@
 import { MapaRiesgo } from "@/componentes/MapaRiesgo";
-import { auraComunas, comunas, configRiesgo, curvaDe, moduloAura, provincias, regiones, tendenciaEstacional, territorio } from "@/lib/datos";
-import { riesgoActual } from "@/lib/pronostico";
+import { auraComunas, comunas, configRiesgo, moduloAura, provincias, regiones, tendenciaEstacional, territorio } from "@/lib/datos";
+import { insumosRiesgo, riesgoActual } from "@/lib/pronostico";
 import { tendencia } from "@/lib/riesgo";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +30,7 @@ export default async function Pagina() {
       hospital: h ? { cod: h.cod, nombre: h.nombre, km: t!.dist_km } : null };
   });
   const tend = Object.fromEntries(Object.entries(te?.regiones ?? {}).map(([r, v]) => [r, Object.entries(v.meses).map(([mes, m]) => ({ mes, anomalia: m.anomalia, cat: tendencia(m.anomalia, cfg.tendencia_grados) }))]));
-  const aura = moduloAura() ? { comunas: auraComunas(), curva: curvaDe("13", "M_T") } : null;
-  return <MapaRiesgo riesgo={riesgo} comunas={lig} regiones={regiones().map((r) => ({ cod: r.cod, nombre: r.nombre, bbox: cajaContinental(r.cod) ?? r.bbox }))} provincias={provincias().map((x) => ({ cod: x.cod, nombre: x.nombre, reg: x.cod_region, comunas: x.comunas }))} tendencia={tend} tendenciaCorrida={te?.corrida ?? null} cfg={cfg} aura={aura} />;
+  const aura = moduloAura() ? { comunas: auraComunas() } : null;
+  const insumos = insumosRiesgo()!;
+  return <MapaRiesgo riesgo={riesgo} insumos={insumos} comunas={lig} regiones={regiones().map((r) => ({ cod: r.cod, nombre: r.nombre, bbox: cajaContinental(r.cod) ?? r.bbox }))} provincias={provincias().map((x) => ({ cod: x.cod, nombre: x.nombre, reg: x.cod_region, comunas: x.comunas }))} tendencia={tend} tendenciaCorrida={te?.corrida ?? null} cfg={cfg} aura={aura} />;
 }

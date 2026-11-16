@@ -56,12 +56,11 @@ export function nivelDe(exceso: number, cortes: number[]): number {
 export type Rango = [est: number, lo: number, hi: number];
 export const sumar = (a: Rango, b: Rango): Rango => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
-/** Texto de un rango de muertes u hospitalizaciones: nunca una cifra sola. */
-export function textoRango(r: Rango, unidad = "muertes adicionales"): string {
-  const lo = Math.max(0, r[1]), hi = Math.max(0, r[2]);
-  if (hi < 0.5) return `menos de 1 ${unidad.replace(/muertes adicionales/, "muerte adicional").replace(/hospitalizaciones adicionales/, "hospitalización adicional")}`;
-  const f = (v: number) => (hi < 10 ? v.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : Math.round(v).toLocaleString("es-CL"));
-  return `entre ${f(lo)} y ${f(hi)} ${unidad}`;
+/** Cifra con su rango, sin frases: «12 (7 – 17)». Con valores chicos usa más decimales. */
+export function textoRango(r: Rango, dec?: number): string {
+  const hi = Math.max(0, r[2]), d = dec ?? (hi < 1 ? 2 : hi < 10 ? 1 : 0);
+  const f = (v: number) => Math.max(0, v).toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d });
+  return `${f(r[0])} (${f(r[1])} – ${f(r[2])})`;
 }
 
 /** Índice mensual 0 a 4 de noviembre a marzo; fuera de temporada usa el mes cálido más cercano. */

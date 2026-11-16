@@ -55,15 +55,15 @@ export function SerieVeranos({ etiquetas, barras, linea, lo, hi, rotuloBarras, r
 }
 
 /** Detalle diario de un verano: temperatura máxima arriba (con el umbral de calor extremo) y casos del día abajo. */
-export function DetalleDiario({ inicio, tmax, calor, p95, valores, rotuloValores, rotuloArriba, arriba }: {
-  inicio: string; tmax: number[] | null; calor: number[]; p95: number | null; valores: number[]; rotuloValores: string; rotuloArriba?: string; arriba?: number[];
+export function DetalleDiario({ inicio, tmax, calor, p95, valores, rotuloValores, rotuloArriba, arriba, dec = 0 }: {
+  inicio: string; tmax: number[] | null; calor: number[]; p95: number | null; valores: number[]; rotuloValores: string; rotuloArriba?: string; arriba?: number[]; dec?: number;
 }) {
   const [h, setH] = useState<number | null>(null);
   const serie = tmax ?? arriba ?? [], n = Math.max(serie.length, valores.length);
   const A1 = 120, A2 = 130, SEP = 34, H = A1 + SEP + A2 + 28, ancho = (W - IZQ - DER) / n, cx = (i: number) => IZQ + ancho * (i + 0.5);
   const minT = tmax ? Math.floor(Math.min(...serie, p95 ?? 99) - 1) : 0, maxT = Math.ceil(Math.max(...serie, p95 ?? 0) + 1);
   const yT = (v: number) => A1 - ((v - minT) / (maxT - minT || 1)) * (A1 - 14);
-  const maxV = Math.max(1, ...valores), tv = ticks(maxV, 3), topeV = Math.max(maxV, tv[tv.length - 1]), y0 = A1 + SEP, yV = (v: number) => y0 + A2 - (v / topeV) * (A2 - 8);
+  const maxV = Math.max(dec ? 1e-9 : 1, ...valores), tv = ticks(maxV, 3), topeV = Math.max(maxV, tv[tv.length - 1]), y0 = A1 + SEP, yV = (v: number) => y0 + A2 - (v / topeV) * (A2 - 8);
   const fecha = (i: number) => { const d = new Date(inicio + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + i); return d; };
   const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const esCalor = new Set(calor);
@@ -78,7 +78,7 @@ export function DetalleDiario({ inicio, tmax, calor, p95, valores, rotuloValores
           : serie.map((v, i) => v > 0 && <rect key={i} x={cx(i) - ancho * 0.4} width={ancho * 0.8} y={yT(v)} height={A1 - yT(v)} fill="var(--n2)" />)}
         {tmax && p95 != null && <g><line x1={IZQ} x2={W - DER} y1={yT(p95)} y2={yT(p95)} stroke="var(--texto-2)" strokeDasharray="5 4" /><text x={W - DER} y={yT(p95) - 4} textAnchor="end">calor extremo: sobre {f(p95, 1)} °C</text></g>}
         <text x={0} y={y0 - 12} style={{ fontWeight: 650 }}>{rotuloValores}</text>
-        {tv.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={yV(t)} y2={yV(t)} /><text x={IZQ - 6} y={yV(t) + 4} textAnchor="end">{f(t)}</text></g>)}
+        {tv.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={yV(t)} y2={yV(t)} /><text x={IZQ - 6} y={yV(t) + 4} textAnchor="end">{f(t, dec)}</text></g>)}
         {valores.map((v, i) => v > 0 && <rect key={i} x={cx(i) - ancho * 0.38} width={Math.max(1, ancho * 0.76)} y={yV(v)} height={y0 + A2 - yV(v)} fill={esCalor.has(i) ? "var(--tinta)" : "var(--barra)"} />)}
         {Array.from({ length: n }, (_, i) => fecha(i)).map((d, i) => d.getUTCDate() === 1 && <text key={i} x={cx(i)} y={H - 8}>{MES[d.getUTCMonth()]} {d.getUTCFullYear()}</text>)}
         {h != null && <line x1={cx(h)} x2={cx(h)} y1={14} y2={y0 + A2} stroke="var(--texto-3)" strokeDasharray="3 3" />}
@@ -87,14 +87,14 @@ export function DetalleDiario({ inicio, tmax, calor, p95, valores, rotuloValores
       {h != null && <Flotante x={cx(h) / W}>
         <b>{fecha(h).getUTCDate()} {MES[fecha(h).getUTCMonth()]} {fecha(h).getUTCFullYear()}</b>{esCalor.has(h) && <span> · calor extremo</span>}
         {serie[h] != null && <div>{tmax ? `Máxima: ${f(serie[h], 1)} °C` : `${rotuloArriba}: ${f(serie[h])}`}</div>}
-        <div>{rotuloValores}: {f(valores[h] ?? 0)}</div>
+        <div>{rotuloValores}: {f(valores[h] ?? 0, dec)}</div>
       </Flotante>}
     </div>
   );
 }
 
 /** Curva de riesgo: aumento de casos según la temperatura, con su banda de incertidumbre, el umbral y el corte de calor extremo. */
-export function CurvaRiesgo({ x, rr, lo, hi, umbral, p95, unidad }: { x: number[]; rr: number[]; lo: number[]; hi: number[]; umbral: number | null; p95: number | null; unidad: string }) {
+export function CurvaRiesgo({ x, rr, lo, hi, umbral, p95, unidad, rotulo }: { x: number[]; rr: number[]; lo: number[]; hi: number[]; umbral: number | null; p95: number | null; unidad: string; rotulo: string }) {
   const [h, setH] = useState<number | null>(null);
   const H = 268, A = 200, ARR = 18, pc = (v: number) => (v - 1) * 100;
   const maxY = Math.max(5, ...hi.map(pc)), minY = Math.min(0, ...lo.map(pc)), ty = ticks(maxY, 4);
@@ -102,13 +102,19 @@ export function CurvaRiesgo({ x, rr, lo, hi, umbral, p95, unidad }: { x: number[
   const marcas = ticks(x[x.length - 1] - x[0], 6).map((t) => Math.ceil(x[0]) + t).filter((t) => t <= x[x.length - 1]);
   return (
     <div className="graf-caja" onMouseLeave={() => setH(null)}>
+      <div className="leyenda-graf">
+        <span><svg width="22" height="8"><line x1="0" x2="22" y1="4" y2="4" stroke="var(--tinta)" strokeWidth="2" /></svg>estimación</span>
+        <span><i className="cuadro" style={{ background: "var(--banda)" }} />rango de 95 %</span>
+        {umbral != null && <span><svg width="22" height="8"><line x1="0" x2="22" y1="4" y2="4" stroke="var(--texto-2)" strokeWidth="2" strokeDasharray="5 4" /></svg>umbral, desde donde sube: {unidad === "°C" ? `${f(umbral, 1)} °C` : `percentil ${f(umbral)}`}</span>}
+        {p95 != null && <span><svg width="22" height="8"><line x1="0" x2="22" y1="4" y2="4" stroke="var(--n2)" strokeWidth="2" strokeDasharray="5 4" /></svg>calor extremo: {unidad === "°C" ? `${f(p95, 1)} °C` : `percentil ${f(p95)}`}</span>}
+      </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="grafico" role="img" aria-label="Curva de riesgo según la temperatura">
-        <text x={0} y={10} style={{ fontWeight: 650 }}>Aumento de casos respecto de un día sin calor (%)</text>
+        <text x={0} y={10} style={{ fontWeight: 650 }}>{rotulo}</text>
         {ty.map((t) => <g key={t}><line className="guia" x1={IZQ} x2={W - DER} y1={py(t)} y2={py(t)} /><text x={IZQ - 6} y={py(t) + 4} textAnchor="end">{f(t)}</text></g>)}
         <path d={`M${x.map((v, i) => `${px(v)},${py(pc(hi[i]))}`).join("L")}L${[...x.keys()].reverse().map((i) => `${px(x[i])},${py(pc(lo[i]))}`).join("L")}Z`} fill="var(--banda)" />
         <path d={`M${x.map((v, i) => `${px(v)},${py(pc(rr[i]))}`).join("L")}`} fill="none" stroke="var(--tinta)" strokeWidth={2} />
-        {umbral != null && <g><line x1={px(umbral)} x2={px(umbral)} y1={ARR} y2={ARR + A} stroke="var(--texto-2)" strokeDasharray="5 4" /><text x={px(umbral) + 5} y={ARR + 12}>umbral: {unidad === "°C" ? `${f(umbral, 1)} °C` : `percentil ${f(umbral)}`}</text></g>}
-        {p95 != null && <g><line x1={px(p95)} x2={px(p95)} y1={ARR} y2={ARR + A} stroke="var(--n2)" strokeDasharray="5 4" /><text x={px(p95) + (px(p95) > W - 170 ? -5 : 5)} y={ARR + 28} textAnchor={px(p95) > W - 170 ? "end" : "start"} style={{ fill: "var(--texto)" }}>calor extremo{unidad === "°C" ? `: ${f(p95, 1)} °C` : ""}</text></g>}
+        {umbral != null && <line x1={px(umbral)} x2={px(umbral)} y1={ARR} y2={ARR + A} stroke="var(--texto-2)" strokeDasharray="5 4" />}
+        {p95 != null && <line x1={px(p95)} x2={px(p95)} y1={ARR} y2={ARR + A} stroke="var(--n2)" strokeDasharray="5 4" />}
         {marcas.map((t) => <text key={t} x={px(t)} y={ARR + A + 16} textAnchor="middle">{f(t)}</text>)}
         <text x={W - DER} y={H - 6} textAnchor="end">{unidad === "°C" ? "Promedio de la máxima del día y de los 3 anteriores (°C)" : "Percentil local de la temperatura"}</text>
         {h != null && <circle cx={px(x[h])} cy={py(pc(rr[h]))} r={4.5} fill="var(--tinta)" stroke="var(--panel)" strokeWidth={2} />}

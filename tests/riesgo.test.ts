@@ -30,9 +30,9 @@ describe("riesgo", () => {
     expect(aEscalaRegion(22, qc, qr)).toBeCloseTo(42);      // 2 grados sobre el máximo histórico
   });
   it("nunca entrega una cifra sola", () => {
-    expect(textoRango([5, 3.2, 9.4])).toBe("entre 3,2 y 9,4 muertes adicionales");
-    expect(textoRango([0.1, -0.2, 0.3])).toBe("menos de 1 muerte adicional");
-    expect(textoRango([50, -4, 120])).toBe("entre 0 y 120 muertes adicionales");
+    expect(textoRango([5, 3.2, 9.4])).toBe("5,0 (3,2 – 9,4)");
+    expect(textoRango([0.1, -0.2, 0.3])).toBe("0,10 (0,00 – 0,30)");
+    expect(textoRango([50, -4, 120])).toBe("50 (0 – 120)");
   });
   it("mes cálido y tendencia", () => {
     expect(["2026-11-15", "2026-12-01", "2027-01-10", "2027-03-31"].map(mesCalido)).toEqual([0, 1, 2, 4]);
@@ -41,7 +41,7 @@ describe("riesgo", () => {
 });
 
 describe("historia", () => {
-  const l = { temporadas: [2001, 2002, 2003], pob65: [null, 1000, 1000], series: { M_T_A: [[100, 100, 100], [2, 4, 6], [1, 2, 3], [3, 6, 9]], M_2_H: [[5, 5, 5], [0, 0, 0], [0, 0, 0], [0, 0, 0]] } } as unknown as Lugar;
+  const l = { temporadas: [2001, 2002, 2003], pob65: [null, 1000, 1000], pobT: [null, 1000, 1000], series: { M_T_A: [[100, 100, 100], [2, 4, 6], [1, 2, 3], [3, 6, 9]], M_2_H: [[5, 5, 5], [0, 0, 0], [0, 0, 0], [0, 0, 0]] } } as unknown as Lugar;
   it("arma las claves de serie y de curva", () => {
     expect(claveSerie("M", "2", "H")).toBe("M_2_H");
     expect(claveSerie("H", "65", "M")).toBe("H_65_A");
@@ -52,7 +52,7 @@ describe("historia", () => {
   it("suma el período y calcula la tasa solo con años con población", () => {
     const r = resumen(l, "M_T_A", 0, 2)!;
     expect([r.obs, r.an, r.lo, r.hi, r.suficiente]).toEqual([300, 12, 6, 18, true]);
-    expect(r.tasa).toBeCloseTo(500);            // (4 + 6) muertes / 2.000 personas-año
+    expect(r.tasa).toBeCloseTo(10);             // (4 + 6) muertes por cada 1.000 habitantes, sumando veranos
     expect(resumen(l, "M_2_H", 0, 2)!.suficiente).toBe(false);
   });
   it("agrupa o declara datos insuficientes cuando hay pocos casos", () => {
@@ -62,5 +62,18 @@ describe("historia", () => {
   it("tendencia por década necesita 8 años", () => {
     expect(tendenciaDecada([1, 2, 3], [1, 2, 3])).toBeNull();
     expect(tendenciaDecada([1, 2, 3, 4, 5, 6, 7, 8], [1, 2, 3, 4, 5, 6, 7, 8])).toBeCloseTo(10);
+  });
+});
+
+import { simularRiesgo, type Insumos } from "../src/lib/calculo";
+describe("simulación", () => {
+  const ins: Insumos = { cortes: [0.02, 0.05, 0.1], diasAlta: 7, curvas: { "13": { M: curva, H: null, qx: Array.from({ length: 101 }, (_, i) => 15 + i * 0.2) } },
+    base: { "13101": { m: [2, 2, 2, 2, 2], h: [0, 0, 0, 0, 0] } }, clima: {}, comunas: [{ cod: "13101", reg: "13" }] };
+  it("aplica la misma temperatura a todos los días", () => {
+    const r = simularRiesgo(ins, 32.5, ["2026-12-01", "2026-12-02"]);
+    expect(r.comunas["13101"].e).toEqual([0.2, 0.2]);
+    expect(r.comunas["13101"].m[0]).toBeCloseTo(0.4);
+    expect(r.regiones["13"].n).toEqual([3, 3]);
+    expect(simularRiesgo(ins, 20, ["2026-12-01"]).pais.m[0]).toBe(0);
   });
 });

@@ -320,3 +320,11 @@ input[type="range"] { padding: 0; accent-color: var(--acento); }
 .formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--superficie-2); border: 1px solid var(--borde-suave); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 14px; overflow-x: auto; }
 .tabla-mini .enlace-btn { text-align: left; }
 .tabla-mini td.n { white-space: nowrap; }
+.lectura { font-size: 15px; margin-bottom: 12px; max-width: 95ch; }
+details.chico > summary { cursor: pointer; color: var(--enlace); }
+.kpi .valor .rango { font-size: 15px; font-weight: 600; color: var(--texto-2); }
+.deslizador { display: inline-flex; align-items: center; gap: 8px; background: var(--flotante); border: 1px solid var(--borde); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.deslizador input { width: 160px; accent-color: var(--acento); }
+.deslizador output { font-weight: 800; min-width: 54px; font-variant-numeric: tabular-nums; }
+.barra-filtros > div.filtro-medida { flex: 0 0 auto; }
+.filtro-medida .segmento button { padding: 5px 10px; }
