@@ -17,7 +17,7 @@ export default function Metodologia() {
       <h1>Metodología y datos</h1>
       <p className="bajada">De dónde sale cada cifra, qué se hizo con cada fuente y qué no se puede afirmar.</p>
 
-      <section className="seccion">
+      <section className="seccion" data-tour="fuentes">
         <h2>Fuentes</h2>
         <div className="tabla-caja" style={{ marginTop: 10 }}><table>
           <thead><tr><th>Fuente</th><th>Institución</th><th>Qué se usa</th><th>Descarga</th><th>Condiciones de uso</th></tr></thead>
@@ -53,7 +53,7 @@ export default function Metodologia() {
         <p>Cada manzana hereda el hospital de su comuna. Las defunciones traen comuna de residencia, no hospital: por eso en cada hospital se muestran las muertes de residentes de su área. Si se consigue el mapa de derivación oficial de un Servicio, reemplaza a la regla de cercanía (archivo <code>config/derivacion.json</code>).</p>
       </section>
 
-      {m && <section className="seccion">
+      {m && <section className="seccion" data-tour="modelo">
         <h2>Modelo estadístico</h2>
         <p>Un solo modelo convierte grados de temperatura en muertes y hospitalizaciones. Compara, dentro de cada verano, los días más calurosos con los días templados del mismo lugar, y mide cuánto suben los casos.</p>
         <div className="formula">Muertes potenciales = Σ<sub>d</sub> B<sub>d</sub> · (RR(T<sub>d</sub>) − 1)</div>
@@ -107,7 +107,7 @@ export default function Metodologia() {
         </ul>
       </section>
 
-      <section className="seccion">
+      <section className="seccion" data-tour="limites">
         <h2>Límites</h2>
         <ul>
           <li><b>Muertes atribuibles:</b> son una estimación estadística con rango, no un listado de personas ni un conteo de certificados por calor.</li>

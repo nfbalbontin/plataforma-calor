@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Navegacion } from "@/componentes/Navegacion";
 import { Tema } from "@/componentes/Tema";
+import { Tutorial } from "@/componentes/Tutorial";
 import { indiceHistoria } from "@/lib/datos";
 import { fechaLarga } from "@/lib/tiempo";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const ui = Geist({ subsets: ["latin"], variable: "--font-ui", display: "swap" });
+const titulo = Instrument_Serif({ subsets: ["latin"], weight: "400", variable: "--font-titulo", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Calor y mortalidad en Chile",
@@ -18,14 +20,14 @@ const TEMA = `try{var t=localStorage.getItem('tema')||(matchMedia('(prefers-colo
 export default function Layout({ children }: { children: React.ReactNode }) {
   const indice = indiceHistoria();
   return (
-    <html lang="es" className={inter.variable} suppressHydrationWarning>
+    <html lang="es" className={`${ui.variable} ${titulo.variable}`} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: TEMA }} /></head>
       <body>
         <div className="aviso-prototipo" role="note"><strong>Estimaciones estadísticas, siempre con su rango.</strong> No es un sistema de alertas oficiales.</div>
         <header className="cabecera">
-          <a className="marca" href="/">Calor y mortalidad <span>·</span> Chile</a>
+          <a className="marca" href="/">Calor y mortalidad <span>Chile</span></a>
           <Navegacion />
-          <div className="acciones"><Tema /></div>
+          <div className="acciones"><Tutorial /><Tema /></div>
         </header>
         <main>{children}</main>
         <footer className="pie">

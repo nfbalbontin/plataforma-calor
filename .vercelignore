@@ -1,0 +1,17 @@
+# Lo que NO se sube a Vercel. Mismo contenido que .gitignore, salvo los archivos de la capa AURA:
+# esos no están en git, pero sí se publican en el sitio (decisión del autor, 16-11-2026).
+node_modules/
+.next/
+.trabajo/
+.datos/
+.env
+.env.*
+.vercel
+next-env.d.ts
+tsconfig.tsbuildinfo
+__pycache__/
+.github/
+public/descargas/
+depuracion/
+pipeline/
+tests/

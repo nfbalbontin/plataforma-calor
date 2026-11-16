@@ -79,5 +79,5 @@ export const indiceHistoria = () => leer<Indice | null>("public/historia/indice.
 export const historiaPais = () => leer<{ temporadas: number[]; series: Record<string, (number | null)[][]>; clima: { calor: number[] } } | null>("public/historia/pais.json", null);
 
 /** El módulo AURA solo se muestra si está activado: sus datos no se publican sin autorización de su equipo. */
-export const moduloAura = () => process.env.MODULO_AURA === "1" && fs.existsSync(path.join(RAIZ, "public/teselas/manzanas_13_aura.pmtiles"));
+export const moduloAura = () => process.env.MODULO_AURA === "1" && fs.existsSync(path.join(RAIZ, "datos/aura.json"));
 export const auraComunas = () => (moduloAura() ? Object.keys(leer<{ comunas: Record<string, unknown> }>("datos/aura.json", { comunas: {} }).comunas) : []);

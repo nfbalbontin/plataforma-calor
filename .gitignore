@@ -7,7 +7,7 @@ node_modules/
 next-env.d.ts
 tsconfig.tsbuildinfo
 __pycache__/
-# Módulo AURA: no se publica sin autorización escrita de su equipo
+# Capa AURA: sus datos derivados no van al repositorio; se suben al sitio con .vercelignore
 datos/aura.json
 public/teselas/*_aura.pmtiles
 public/descargas/manzanas_aura/

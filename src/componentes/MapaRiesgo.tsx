@@ -62,7 +62,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
   }, [comunas]);
   const k = (pob: number) => (medida === "tasa" ? (pob ? POR / pob : 0) : 1);
   const pobAqui = pobDe.get(c1?.cod ?? r1?.cod ?? "00") ?? 0, kAqui = k(pobAqui);
-  const enRM = !!aura && (reg === "13");
+  const enRM = !!aura;
   const auraAqui = !!(aura && conAura && c1 && aura.comunas.includes(c1.cod));
 
   // Unidades del nivel que se ve: regiones en Chile; comunas o provincias dentro de una región
@@ -240,21 +240,21 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
       <div className="mapa-caja">
         <div ref={caja} className="mapa" role="application" aria-label="Mapa de riesgo por calor" />
         <div className="mapa-controles">
-          <div className="segmento" role="group" aria-label="Dónde estás">
+          <div className="segmento" role="group" aria-label="Dónde estás" data-tour="mapa-lugar">
             <button aria-pressed={!reg} onClick={() => { setReg(null); setCom(null); setMz(null); }}>Chile</button>
             {r1 && <button aria-pressed={!com} onClick={() => { setCom(null); setMz(null); }}>{r1.nombre}</button>}
             {c1 && <button aria-pressed>{c1.nombre}</button>}
           </div>
-          <div className="segmento" role="group" aria-label="Temperatura">
+          <div className="segmento" role="group" aria-label="Temperatura" data-tour="mapa-modo">
             <button aria-pressed={!sim} onClick={() => setModo("pronostico")}>Pronóstico</button>
             <button aria-pressed={sim} onClick={() => setModo("simular")}>Simular temperatura</button>
           </div>
           {sim && <label className="deslizador"><span>Máxima de</span><input type="range" min={10} max={42} step={0.5} value={tsim} onChange={(e) => setTsim(Number(e.target.value))} aria-label="Temperatura máxima simulada" /><output>{fmt(tsim, 1)} °C</output></label>}
-          <div className="segmento" role="group" aria-label="Medida">
+          <div className="segmento" role="group" aria-label="Medida" data-tour="mapa-medida">
             <button aria-pressed={medida === "numero"} onClick={() => setMedida("numero")}>Número</button>
             <button aria-pressed={medida === "tasa"} onClick={() => setMedida("tasa")}>Por 100.000 habitantes</button>
           </div>
-          {!c1 && <div className="segmento" role="group" aria-label="Pintar por">
+          {!c1 && <div className="segmento" role="group" aria-label="Pintar por" data-tour="mapa-pintar">
             <button aria-pressed={pintar === "valor"} onClick={() => setPintar("valor")}>Muertes potenciales</button>
             <button aria-pressed={pintar === "nivel"} onClick={() => setPintar("nivel")}>Nivel de riesgo</button>
           </div>}
@@ -263,7 +263,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
             <button aria-pressed={unidad === "provincia"} onClick={() => setUnidad("provincia")}>Provincias</button>
           </div>}
           {enRM && <div className="segmento" role="group" aria-label="Capa de calor urbano AURA">
-            <button aria-pressed={!conAura} onClick={() => setConAura(false)}>Sin AURA</button><button aria-pressed={conAura} onClick={() => setConAura(true)}>Con calor urbano (AURA)</button>
+            <button aria-pressed={!conAura} onClick={() => setConAura(false)}>Sin AURA</button><button aria-pressed={conAura} onClick={() => { setConAura(true); if (reg !== "13") { setReg("13"); setCom(null); setMz(null); } }}>Con calor urbano (AURA)</button>
           </div>}
         </div>
         {tip && <div className="tooltip-mapa" style={{ left: tip.x, top: tip.y }}>{tip.t}</div>}
@@ -296,7 +296,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
           <dt>Muertes potenciales ese día{sufijo}</dt><dd>{textoRango(por([serie.m[d], serie.lo[d], serie.hi[d]], kAqui))}</dd>
         </dl>
 
-        {!sim && <div className="seccion">
+        {!sim && <div className="seccion" data-tour="dias">
           <h3>Riesgo de cada día</h3>
           <div className="tira" style={{ marginTop: 6 }}>
             {vista.fechas.map((x, i) => { const kd = dia(x); return <button key={x} className={`r${serie.n[i]}${i >= alta ? " orientativo" : ""}`} aria-pressed={i === d} onClick={() => setD(i)} title={`${kd.largo}: riesgo ${cfg.niveles[serie.n[i]].toLowerCase()}${serie.t[i] != null ? `, máxima ${fmt(serie.t[i]!, 1)} °C` : ""}${i >= alta ? " (orientativo)" : ""}`}>{kd.sem}<b>{kd.n}</b></button>; })}
@@ -304,7 +304,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
           <p className="chico" style={{ marginTop: 6 }}>Días 1 a {alta}: confianza alta. Días {alta + 1} a {N}: orientativos, se ven más tenues.</p>
         </div>}
 
-        <div className="seccion">
+        <div className="seccion" data-tour="potenciales">
           <h3>{sim ? `Si durara ${alta} días` : "Muertes y hospitalizaciones potenciales"}{sufijo}</h3>
           <dl className="dl" style={{ marginTop: 6 }}>
             <dt>Muertes, {sim ? `${alta} días` : `próximos ${alta} días`}</dt><dd>{textoRango(s7)}</dd>
@@ -343,7 +343,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
           </dl>
           <p className="chico" style={{ marginTop: 6 }}>AURA suma o resta a cada manzana su diferencia de temperatura de verano respecto del promedio de la comuna. {conAura ? "El mapa la está mostrando." : "Actívala arriba para verla en el mapa."} Solo uso local: no se publica sin autorización de AURA.</p>
         </div>}
-        {enRM && !c1 && <p className="chico" style={{ marginTop: 10 }}>Capa AURA: elige una comuna para ver cuántas manzanas cambian de nivel con el calor urbano. El total de cada comuna casi no cambia, porque AURA mide diferencias respecto del promedio comunal.</p>}
+        {enRM && reg === "13" && !c1 && <p className="chico" style={{ marginTop: 10 }}>Capa AURA: elige una comuna para ver cuántas manzanas cambian de nivel con el calor urbano. El total de cada comuna casi no cambia, porque AURA mide diferencias respecto del promedio comunal.</p>}
 
         {c1 && <div className="seccion">
           <h3>Ficha de {c1.nombre}</h3>
@@ -358,7 +358,7 @@ export function MapaRiesgo({ riesgo, insumos, comunas, regiones, provincias, ten
           </dl>
         </div>}
 
-        {!c1 && <div className="seccion">
+        {!c1 && <div className="seccion" data-tour="lugares">
           <h3>{unidadTxt}, {sim ? `con ${fmt(tsim, 1)} °C` : f.largo}</h3>
           <table className="tabla-mini" style={{ marginTop: 6 }}>
             <thead><tr><th>{!reg ? "Región" : unidad === "provincia" ? "Provincia" : "Comuna"}</th><th>Riesgo</th><th className="n">Muertes potenciales{sufijo} (rango)</th></tr></thead>

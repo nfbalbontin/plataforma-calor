@@ -119,7 +119,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
 
   return (
     <div className="pagina">
-      <nav className="ruta" aria-label="Dónde estás">
+      <nav className="ruta" aria-label="Dónde estás" data-tour="ruta">
         {l.ruta.map((p, i) => i < l.ruta.length - 1 ? <span key={p.cod}><a href={rutaDe(p)}>{p.nombre}</a> ›</span> : <b key={p.cod}>{p.nombre}</b>)}
       </nav>
       <div className="titulo-fila">
@@ -132,7 +132,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
         {" "}Defunciones hasta el {FECHA(hasta)}. {l.clima.punto ? `Temperatura de ${l.clima.punto}, capital regional.` : "Temperatura de cada capital regional."}
       </p>
 
-      <div className="filtros barra-filtros">
+      <div className="filtros barra-filtros" data-tour="filtros">
         <div><label htmlFor="f-ind">Indicador</label><select id="f-ind" value={ind} onChange={(e) => { setInd(e.target.value); setSel(null); }}>{disp.map(([k, n]) => <option key={k} value={k}>{l.tipo === "hospital" && k === "M" ? "Muertes de residentes del área" : n}</option>)}</select></div>
         <div><label htmlFor="f-des">Desde el verano</label><select id="f-des" value={desde} onChange={(e) => { setDesde(Math.min(Number(e.target.value), fin)); setSel(null); }}>{T.map((t, i) => <option key={t} value={i}>{temporadaTexto(t)}</option>)}</select></div>
         <div><label htmlFor="f-has">Hasta el verano</label><select id="f-has" value={fin} onChange={(e) => { setFin(Math.max(Number(e.target.value), desde)); setSel(null); }}>{T.map((t, i) => <option key={t} value={i}>{temporadaTexto(t)}</option>)}</select></div>
@@ -143,7 +143,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       {!esMuerte(ind) && <p className="chico" style={{ marginTop: 6 }}>Urgencias no trae sexo ni diagnóstico: solo grupos amplios de causa y dos grupos de edad. Datos desde el verano 2010-11.</p>}
 
       {/* 1. Tres cifras */}
-      <section className="seccion grilla g3">
+      <section className="seccion grilla g3" data-tour="cifras">
         <div className="tarjeta kpi">
           <div className="rot">{sust[0].toUpperCase() + sust.slice(1)} atribuibles al calor, {per}{calc?.conTasa ? ", por 1.000 habitantes" : ""}</div>
           {r?.suficiente ? <Valor c={calc!.conTasa ? r.tasa : r.an} lo={calc!.conTasa ? r.tasaLo : r.lo} hi={calc!.conTasa ? r.tasaHi : r.hi} dec={calc!.conTasa ? 2 : 0} />
@@ -165,7 +165,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       </section>
 
       {/* 2. Temperatura y casos en el tiempo */}
-      <section className="seccion">
+      <section className="seccion" data-tour="serie">
         <div className="titulo-fila">
           <h2>Días de calor extremo y {sust} atribuibles, por verano</h2>
         </div>
@@ -184,7 +184,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       </section>
 
       {/* 3. A más grados, más casos */}
-      <section className="seccion">
+      <section className="seccion" data-tour="curva">
         <h2>Cuánto suben las {nombreInd} con la temperatura</h2>
         {cur && cc ? <div className="tarjeta" style={{ marginTop: 10 }}>
           {lectura && <p className="lectura">{cur.unidad === "°C" ? `Con ${fmt(lectura.x, 1)} °C (calor extremo)` : "En un día de calor extremo (percentil 95 de la temperatura del lugar)"}, las {nombreInd} suben <b>{fmt(Math.max(0, lectura.rr - 1) * 100, 1)} %</b> (entre {fmt(Math.max(0, lectura.lo - 1) * 100, 1)} y {fmt(Math.max(0, lectura.hi - 1) * 100, 1)} %) respecto de un día sin calor.
@@ -200,7 +200,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       </section>
 
       {/* 4. Dónde */}
-      {l.hijos.length > 0 && <section className="seccion">
+      {l.hijos.length > 0 && <section className="seccion" data-tour="donde">
         <h2>{l.tipo === "comuna" ? "Hospitales de la comuna" : `Dónde se concentra, por ${NIVEL_INFERIOR[l.tipo]}`}</h2>
         <p className="sub">{ranking[0]?.tasa ? `${sust[0].toUpperCase() + sust.slice(1)} atribuibles por 1.000 habitantes en todo el período` : `${sust[0].toUpperCase() + sust.slice(1)} atribuibles en todo el período`}, {per}. Un clic baja de nivel.</p>
         <div className={conMapa ? "grilla dos-mapa" : ""} style={{ marginTop: 10 }}>
@@ -216,7 +216,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       </section>}
 
       {/* 5. Quiénes */}
-      {perfil && <section className="seccion">
+      {perfil && <section className="seccion" data-tour="quienes">
         <h2>Quiénes mueren en días de calor extremo y en días normales</h2>
         <p className="sub">Todas las muertes de la temporada cálida, {per}: {fmt(mCalor)} en {fmt(diasCalor, 0)} días de calor extremo ({fmt(diasCalor ? mCalor / diasCalor : null, 1)} por día) y {fmt(mNormal)} en días normales ({fmt(diasTot - diasCalor ? mNormal / (diasTot - diasCalor) : null, 1)} por día).</p>
         {mCalor < 50 ? <p className="aviso" style={{ marginTop: 10 }}>Datos insuficientes: menos de 50 muertes en días de calor extremo.</p> : <>
@@ -228,7 +228,7 @@ export function Historia({ archivo, hasta }: { archivo: string; hasta: string })
       </section>}
 
       {/* 6. Episodios */}
-      {l.perfil && <section className="seccion">
+      {l.perfil && <section className="seccion" data-tour="olas">
         <h2>Olas de calor{l.tipo === "pais" ? " con más muertes atribuibles" : ""}</h2>
         <p className="sub">Tres o más días seguidos con máxima sobre el percentil 90 local. Se cuentan las muertes atribuibles al calor durante la ola y los 3 días siguientes.</p>
         {eps.length === 0 ? <p className="tenue" style={{ marginTop: 10 }}>Sin olas de calor en el período.</p> : <div className="tabla-caja" style={{ marginTop: 10 }}>
